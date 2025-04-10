@@ -1,0 +1,6 @@
+spring:
+  application:
+    name:
+      EventScope
+  config:
+    import: env.yaml
