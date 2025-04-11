@@ -1,22 +1,46 @@
 package com.zhsaidk.service;
 
+import com.zhsaidk.database.entity.ApiKey;
 import com.zhsaidk.database.entity.Project;
+import com.zhsaidk.database.repo.ApiKeyRepository;
 import com.zhsaidk.database.repo.ProjectRepository;
 import com.zhsaidk.dto.BuildProjectDTO;
+import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PutMapping;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProjectService {
     private final ProjectRepository projectRepository;
+    private final ApiKeyRepository apiKeyRepository;
+
+    @PostConstruct
+    public void init(){
+        Optional<ApiKey> key = apiKeyRepository.findByKeyHashAndIsActiveTrue("3uE9j1Vf9TBLMCwyrWtrs3tMGBXwQTbE2DV4w");
+        if (key.isPresent()){
+            log.info("Тестовый ключ уже есть");
+        }
+        else {
+            apiKeyRepository.save(ApiKey.builder()
+                    .key_hash("3uE9j1Vf9TBLMCwyrWtrs3tMGBXwQTbE2DV4w")
+                    .description("Дано для доступа к эндпоинтам")
+                    .expiresAt(LocalDateTime.now().plusYears(1))
+                    .build());
+            log.info("Тестовый ключ уже создан");
+        }
+
+    }
 
     public List<Project> getAll() {
         return projectRepository.findAll();
@@ -57,4 +81,6 @@ public class ProjectService {
                 })
                 .orElse(false);
     }
+
+
 }
