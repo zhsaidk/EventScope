@@ -25,23 +25,6 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final ApiKeyRepository apiKeyRepository;
 
-    @PostConstruct
-    public void init(){
-        Optional<ApiKey> key = apiKeyRepository.findByKeyHashAndIsActiveTrue("3uE9j1Vf9TBLMCwyrWtrs3tMGBXwQTbE2DV4w");
-        if (key.isPresent()){
-            log.info("Тестовый ключ уже есть");
-        }
-        else {
-            apiKeyRepository.save(ApiKey.builder()
-                    .key_hash("3uE9j1Vf9TBLMCwyrWtrs3tMGBXwQTbE2DV4w")
-                    .description("Дано для доступа к эндпоинтам")
-                    .expiresAt(LocalDateTime.now().plusYears(1))
-                    .build());
-            log.info("Тестовый ключ уже создан");
-        }
-
-    }
-
     public List<Project> getAll() {
         return projectRepository.findAll();
     }
