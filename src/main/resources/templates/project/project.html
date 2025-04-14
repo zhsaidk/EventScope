@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Details</title>
+    <link rel="stylesheet" href="/css/projects/project.css">
+</head>
+<body>
+<div class="container">
+    <h1>Project Details</h1>
+    <div class="form-group">
+        <label for="name">Name:</label>
+        <input type="text" id="name">
+    </div>
+    <div class="form-group">
+        <label for="description">Description:</label>
+        <textarea id="description"></textarea>
+    </div>
+    <div class="form-group">
+        <label for="active">Active:</label>
+        <input type="checkbox" id="active">
+    </div>
+    <div class="button-group">
+        <button onclick="updateProject()" class="update-button">Update</button>
+    </div>
+</div>
+<script src="/js/projects/project.js"></script>
+</body>
+</html>

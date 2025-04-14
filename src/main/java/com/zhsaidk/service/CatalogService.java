@@ -4,14 +4,14 @@ import com.zhsaidk.database.entity.Catalog;
 import com.zhsaidk.database.entity.Project;
 import com.zhsaidk.database.repo.CatalogRepository;
 import com.zhsaidk.database.repo.ProjectRepository;
-import com.zhsaidk.dto.BuildCatalogDto;
+import com.zhsaidk.dto.BuildCreateCatalogDto;
+import com.zhsaidk.dto.BuildReadCatalogDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -29,17 +29,17 @@ public class CatalogService {
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
-    public ResponseEntity<?> build(BuildCatalogDto dto) {
-        Optional<Project> project = projectRepository.findById(dto.getProjectId());
-
-        if (project.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Project with " + dto.getProjectId() + " not found");
+    public ResponseEntity<?> build(BuildCreateCatalogDto dto) {
+        Project project = projectRepository.findById(dto.getProjectId())
+                .orElse(null);
+        if (project == null) {
+            return ResponseEntity.notFound().build();
         }
 
         Catalog savedCatalog = catalogRepository.save(Catalog.builder()
                 .name(dto.getName())
                 .description(dto.getDescription())
-                .project(project.get())
+                .project(project)
                 .active(dto.getActive())
                 .version(dto.getVersion())
                 .build());
@@ -47,18 +47,14 @@ public class CatalogService {
         return ResponseEntity.status(HttpStatus.CREATED).body(savedCatalog);
     }
 
-    public ResponseEntity<?> update(Integer id, BuildCatalogDto dto) {
-        Optional<Project> project = projectRepository.findById(dto.getProjectId());
-        if (project.isEmpty()){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Project with " + dto.getProjectId() + " not found");
-        }
+    public ResponseEntity<?> update(Integer id, BuildReadCatalogDto dto) {
 
         return catalogRepository.findById(id)
                 .map(catalog -> {
                     catalog.setName(dto.getName());
                     catalog.setDescription(dto.getDescription());
                     catalog.setActive(dto.getActive());
-                    catalog.setProject(project.get());
+                    catalog.setProject(catalog.getProject());
                     catalog.setVersion(dto.getVersion());
                     Catalog savedCatalog = catalogRepository.save(catalog);
                     return ResponseEntity.status(HttpStatus.ACCEPTED).body(savedCatalog);

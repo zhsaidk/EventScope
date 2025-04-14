@@ -1,0 +1,63 @@
+.container {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-group input[type="text"],
+.form-group textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.form-group textarea {
+    height: 100px;
+    resize: vertical;
+}
+
+.form-group input[type="checkbox"] {
+    margin-top: 10px;
+}
+
+.button-group {
+    text-align: center;
+}
+
+.update-button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+}
+
+.update-button:hover {
+    background-color: #0056b3;
+    transform: scale(1.05);
+}
+
+.update-button:active {
+    transform: scale(0.95);
+}

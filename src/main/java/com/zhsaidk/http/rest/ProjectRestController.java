@@ -1,12 +1,9 @@
-package com.zhsaidk.rest;
+package com.zhsaidk.http.rest;
 
 import com.zhsaidk.database.entity.Catalog;
 import com.zhsaidk.database.entity.Event;
 import com.zhsaidk.database.entity.Project;
-import com.zhsaidk.dto.BuildCatalogDto;
-import com.zhsaidk.dto.BuildEventDto;
-import com.zhsaidk.dto.BuildProjectDTO;
-import com.zhsaidk.dto.SearchEventsDto;
+import com.zhsaidk.dto.*;
 import com.zhsaidk.service.CatalogService;
 import com.zhsaidk.service.EventService;
 import com.zhsaidk.service.ProjectService;
@@ -21,7 +18,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/projects")
+@RequestMapping("/api/v3/projects")
 @RequiredArgsConstructor
 public class ProjectRestController {
     private final ProjectService projectService;
@@ -78,7 +75,7 @@ public class ProjectRestController {
     }
 
     @PostMapping("/catalogs/build")
-    public ResponseEntity<?> buildCatalog(@Valid @RequestBody BuildCatalogDto dto,
+    public ResponseEntity<?> buildCatalog(@Valid @RequestBody BuildCreateCatalogDto dto,
                                            BindingResult bindingResult){
         if (bindingResult.hasErrors()){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(bindingResult.getAllErrors());
@@ -89,7 +86,7 @@ public class ProjectRestController {
 
     @PutMapping("/catalogs/{id}")
     public ResponseEntity<?> update(@PathVariable("id") Integer id,
-                                    @Valid @RequestBody BuildCatalogDto dto,
+                                    @Valid @RequestBody BuildReadCatalogDto dto,
                                     BindingResult bindingResult){
         if (bindingResult.hasErrors()){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(bindingResult.getAllErrors());
@@ -130,11 +127,8 @@ public class ProjectRestController {
 
     @PutMapping("/catalogs/events/{id}")
     public ResponseEntity<?> updateEvent(@PathVariable("id") UUID id,
-                                         @Valid @RequestBody BuildEventDto dto,
+                                         @Valid @RequestBody BuildCreateEventDto dto,
                                          BindingResult bindingResult){
-        if (bindingResult.hasErrors()){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(bindingResult);
-        }
         return eventService.update(id, dto);
     }
 

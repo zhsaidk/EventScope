@@ -1,16 +1,17 @@
 package com.zhsaidk.dto;
 
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Value;
 
 @Value
-public class BuildCatalogDto {
+public class BuildCreateCatalogDto {
     @NotBlank(message = "Field name must be not null")
     String name;
     @NotBlank(message = "Field description must be not null")
     String description;
-    @NotNull(message = "Field ProjectId must be not null")
+    @NotNull(message = "Field projectId must be not null")
     Integer projectId;
     @NotNull(message = "Field active must be not null")
     Boolean active;
