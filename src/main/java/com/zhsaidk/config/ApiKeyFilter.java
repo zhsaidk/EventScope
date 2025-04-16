@@ -36,7 +36,6 @@ public class ApiKeyFilter implements Filter {
             }
         }
 
-
         if (flag) {
             System.out.println("API Key valid, proceeding");
             filterChain.doFilter(request, response);

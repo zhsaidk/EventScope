@@ -3,6 +3,9 @@ package com.zhsaidk.http.rest;
 import com.zhsaidk.database.entity.Catalog;
 import com.zhsaidk.database.entity.Event;
 import com.zhsaidk.database.entity.Project;
+import com.zhsaidk.database.repo.CatalogRepository;
+import com.zhsaidk.database.repo.EventRepository;
+import com.zhsaidk.database.repo.ProjectRepository;
 import com.zhsaidk.dto.*;
 import com.zhsaidk.service.CatalogService;
 import com.zhsaidk.service.EventService;
@@ -13,50 +16,56 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v3/projects")
+@RequestMapping("/api/v3")
 @RequiredArgsConstructor
 public class ProjectRestController {
     private final ProjectService projectService;
     private final CatalogService catalogService;
     private final EventService eventService;
+    private final CatalogRepository catalogRepository;
+    private final ProjectRepository projectRepository;
+    private final EventRepository eventRepository;
 
-    @GetMapping
-    public ResponseEntity<List<Project>> getAllProject(){
+    @GetMapping("/projects")
+    public ResponseEntity<List<Project>> getAllProject() {
         return ResponseEntity.ok(projectService.getAll());
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getProjectById(@PathVariable("id") Integer id){
-        return projectService.getById(id);
+    @GetMapping("/{projectSlug}")
+    public ResponseEntity<?> getProjectById(@PathVariable("projectSlug") String projectSlug) {
+        return projectService.getById(projectSlug);
     }
 
-    @PostMapping("/build")
+    @PostMapping("/projects")
     public ResponseEntity<?> buildProject(@Valid @RequestBody BuildProjectDTO dto,
-                                         BindingResult bindingResult){
-        if (bindingResult.hasErrors()){
+                                          BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(bindingResult.getAllErrors());
         }
         return projectService.build(dto);
     }
 
-    @PutMapping("/update/{id}")
-    public ResponseEntity<?> modifyProject(@PathVariable("id") Integer id,
-                                    @Valid @RequestBody BuildProjectDTO dto,
-                                    BindingResult bindingResult){
-        if (bindingResult.hasErrors()){
+    @PutMapping("/{projectSlug}")
+    public ResponseEntity<?> modifyProject(@PathVariable("projectSlug") String projectSlug,
+                                           @Valid @RequestBody BuildProjectDTO dto,
+                                           BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(bindingResult.getAllErrors());
         }
-        return projectService.modify(id, dto);
+        return projectService.modify(projectSlug, dto);
     }
 
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<?> removeProject(@PathVariable("id") Integer id){
-        return projectService.remove(id)
+    @DeleteMapping("/{projectSlug}")
+    public ResponseEntity<?> removeProject(@PathVariable("projectSlug") String projectSlug) {
+        return projectService.remove(projectSlug)
                 ? ResponseEntity.noContent().build()
                 : ResponseEntity.notFound().build();
     }
@@ -64,39 +73,57 @@ public class ProjectRestController {
     // TODO ----------------------Для Категории ------------------------------
 
 
-    @GetMapping("/catalogs")
-    public ResponseEntity<List<Catalog>> getAllCatalogs(){
-        return catalogService.getAll();
+    @GetMapping("/projects/catalogs")
+    public ResponseEntity<List<Catalog>> getAllCatalogs() {
+        return catalogService.findAll();
     }
 
-    @GetMapping("/catalogs/{id}")
-    public ResponseEntity<?> getCatalogById(@PathVariable("id") Integer id){
-        return catalogService.findById(id);
+    @GetMapping("/{projectSlug}/{catalogSlug}")
+    public ResponseEntity<?> getCatalogById(
+            @PathVariable("projectSlug") String projectSlug,
+            @PathVariable("catalogSlug") String catalogSlug) {
+        return catalogService.findById(projectSlug, catalogSlug);
     }
 
-    @PostMapping("/catalogs/build")
+    @PostMapping("/{projectSlug}/catalogs")
     public ResponseEntity<?> buildCatalog(@Valid @RequestBody BuildCreateCatalogDto dto,
-                                           BindingResult bindingResult){
-        if (bindingResult.hasErrors()){
+                                          BindingResult bindingResult,
+                                          @PathVariable("projectSlug") String projectSlug) {
+        if (!projectRepository.existsBySlug(projectSlug)) {
+            return ResponseEntity.notFound().build();
+        }
+        if (bindingResult.hasErrors()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(bindingResult.getAllErrors());
         }
 
-        return catalogService.build(dto);
+        return catalogService.build(dto, projectSlug);
     }
 
-    @PutMapping("/catalogs/{id}")
-    public ResponseEntity<?> update(@PathVariable("id") Integer id,
+    @PutMapping("/{projectSlug}/{catalogSlug}")
+    public ResponseEntity<?> update(@PathVariable("projectSlug") String projectSlug,
+                                    @PathVariable("catalogSlug") String catalogSlug,
                                     @Valid @RequestBody BuildReadCatalogDto dto,
-                                    BindingResult bindingResult){
-        if (bindingResult.hasErrors()){
+                                    BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(bindingResult.getAllErrors());
         }
-        return catalogService.update(id, dto);
+        return catalogService.update(projectSlug, catalogSlug, dto);
     }
 
-    @DeleteMapping("/catalogs/{id}")
-    public ResponseEntity<?> removeCatalog(@PathVariable("id") Integer id){
-        return catalogService.remove(id)
+    @DeleteMapping("/{projectSlug}/{catalogSlug}")
+    public ResponseEntity<?> removeCatalog(@PathVariable("projectSlug") String projectSlug,
+                                           @PathVariable("catalogSlug") String catalogSlug) {
+        Project project = projectRepository.findProjectBySlug(projectSlug)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Не найден проект"));
+
+        Catalog catalog = catalogRepository.findCatalogBySlug(catalogSlug)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Не найден каталог"));
+
+        if (!Objects.equals(catalog.getProject().getId(), project.getId())) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        return catalogService.remove(catalogSlug)
                 ? ResponseEntity.noContent().build()
                 : ResponseEntity.notFound().build();
     }
@@ -104,41 +131,73 @@ public class ProjectRestController {
 
     //TODO ---------------------Для Events--------------------------
 
-    @PostMapping("/catalogs/events/build")
+    @PostMapping("/{projectSlug}/{catalogSlug}/events")
     public ResponseEntity<?> builtEvent(@Valid @RequestBody BuildEventDto dto,
-                                        BindingResult bindingResult){
-        if (bindingResult.hasErrors()){
+                                        BindingResult bindingResult,
+                                        @PathVariable(value = "projectSlug") String projectSlug,
+                                        @PathVariable(value = "catalogSlug") String catalogSlug) {
+        if (bindingResult.hasErrors()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(bindingResult.getAllErrors());
         }
-        return eventService.build(dto);
+        return eventService.build(dto, projectSlug, catalogSlug);
     }
 
-    @DeleteMapping("/catalogs/events/{id}")
-    public ResponseEntity<?> removeEvent(@PathVariable("id") UUID id){
-        return eventService.remove(id)
+    @DeleteMapping("/{projectSlug}/{catalogSlug}/{eventId}")
+    public ResponseEntity<?> removeEvent(@PathVariable("projectSlug") String projectSlug,
+                                         @PathVariable("catalogSlug") String catalogSlug,
+                                         @PathVariable("eventId") UUID eventId) {
+        if (checkEvent(eventId, projectSlug, catalogSlug)) return ResponseEntity.badRequest().build();
+
+        return eventService.remove(eventId)
                 ? ResponseEntity.noContent().build()
                 : ResponseEntity.notFound().build();
     }
 
-    @GetMapping("/catalogs/events/{id}")
-    public ResponseEntity<?> getEventById(@PathVariable("id") UUID id){
-        return eventService.getById(id);
+    @GetMapping("/{projectSlug}/{catalogSlug}/{eventId}")
+    public ResponseEntity<?> getEventById(@PathVariable("projectSlug") String projectSlug,
+                                         @PathVariable("catalogSlug") String catalogSlug,
+                                         @PathVariable("eventId") UUID eventId) {
+        if (checkEvent(eventId, projectSlug, catalogSlug)) return ResponseEntity.badRequest().build();
+
+
+        return eventService.getById(eventId);
     }
 
-    @PutMapping("/catalogs/events/{id}")
-    public ResponseEntity<?> updateEvent(@PathVariable("id") UUID id,
+    @PutMapping("/{projectSlug}/{catalogSlug}/{eventId}")
+    public ResponseEntity<?> updateEvent(@PathVariable("eventId") UUID eventId,
                                          @Valid @RequestBody BuildCreateEventDto dto,
-                                         BindingResult bindingResult){
-        return eventService.update(id, dto);
+                                         BindingResult bindingResult,
+                                         @PathVariable(value = "projectSlug") String projectSlug,
+                                         @PathVariable(value = "catalogId") String catalogSlug) {
+
+        if (checkEvent(eventId, projectSlug, catalogSlug)) return ResponseEntity.badRequest().build();
+
+        if (bindingResult.hasErrors()) {
+            return ResponseEntity.badRequest().body(bindingResult.getAllErrors());
+        }
+        return eventService.update(eventId, dto);
     }
 
-    @PostMapping("/catalogs/events/search")
-    public ResponseEntity<?> getByParameters(@Valid @RequestBody SearchEventsDto dto,
-                                                       BindingResult bindingResult) {
+    private boolean checkEvent(@PathVariable("eventId") UUID eventId,
+                               @PathVariable("projectSlug") String projectSlug,
+                               @PathVariable("catalogSlug") String catalogSlug) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found"));
+        Catalog catalog = catalogRepository.findCatalogBySlug(catalogSlug)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Catalog not found"));
+        Project project = projectRepository.findProjectBySlug(projectSlug)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found"));
 
-        if (bindingResult.hasErrors()){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(bindingResult.getAllErrors());
+        if (!Objects.equals(event.getCatalog().getId(), catalog.getId()) || !Objects.equals(catalog.getProject().getId(), project.getId())){
+            return true;
         }
-        return eventService.findByParameters(dto);
+        return false;
+    }
+
+    @GetMapping("/projects/catalogs/events")
+    public ResponseEntity<?> getAllEvents(@RequestParam(name = "text", required = false) String text,
+                                          @RequestParam(name = "begin", required = false) LocalDateTime begin,
+                                          @RequestParam(name = "end", required = false) LocalDateTime end) {
+        return eventService.findByParameters(text, begin, end);
     }
 }

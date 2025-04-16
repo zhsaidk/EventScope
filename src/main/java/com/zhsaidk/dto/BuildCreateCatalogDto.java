@@ -11,8 +11,6 @@ public class BuildCreateCatalogDto {
     String name;
     @NotBlank(message = "Field description must be not null")
     String description;
-    @NotNull(message = "Field projectId must be not null")
-    Integer projectId;
     @NotNull(message = "Field active must be not null")
     Boolean active;
     @NotNull(message = "Field version must be not null")

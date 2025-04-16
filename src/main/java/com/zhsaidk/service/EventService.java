@@ -2,8 +2,10 @@ package com.zhsaidk.service;
 
 import com.zhsaidk.database.entity.Catalog;
 import com.zhsaidk.database.entity.Event;
+import com.zhsaidk.database.entity.Project;
 import com.zhsaidk.database.repo.CatalogRepository;
 import com.zhsaidk.database.repo.EventRepository;
+import com.zhsaidk.database.repo.ProjectRepository;
 import com.zhsaidk.dto.BuildCreateEventDto;
 import com.zhsaidk.dto.BuildEventDto;
 import com.zhsaidk.dto.SearchEventsDto;
@@ -12,38 +14,42 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class EventService {
     private final EventRepository eventRepository;
     private final CatalogRepository catalogRepository;
+    private final ProjectRepository projectRepository;
 
-    public ResponseEntity<?> build(BuildEventDto dto) {
-        Optional<Catalog> catalog = catalogRepository.findById(dto.getCatalogId());
+    public ResponseEntity<?> build(BuildEventDto dto, String projectSlug, String catalogSlug) {
 
-        if (catalog.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Catalog with id: " + dto.getCatalogId() + " not found");
+        Catalog catalog = catalogRepository.findCatalogBySlug(catalogSlug)
+                .orElse(null);
+        Project project = projectRepository.findProjectBySlug(projectSlug)
+                .orElse(null);
+
+        if ((catalog == null || project == null) || !Objects.equals(catalog.getProject().getId(), project.getId())) {
+            return ResponseEntity.badRequest().build();
         }
 
         Event savedEvent = eventRepository.save(Event.builder()
                 .name(dto.getName())
                 .parameters(dto.getParameters())
-                .catalog(catalog.get())
-                .localCreatedAt(dto.getLocalCreatedAt())
+                .catalog(catalog)
+                .localCreatedAt(dto.getLocal_created_at())
                 .build());
 
         return ResponseEntity.ok(savedEvent);
     }
 
     public Boolean remove(UUID id) {
+
         if (eventRepository.existsById(id)) {
             eventRepository.deleteById(id);
             return true;
@@ -58,24 +64,24 @@ public class EventService {
     }
 
     public ResponseEntity<?> update(UUID id, BuildCreateEventDto dto) {
+
         return eventRepository.findById(id)
                 .map(event -> {
                     event.setName(dto.getName());
                     event.setCatalog(event.getCatalog());
                     event.setParameters(dto.getParameters());
-                    event.setLocalCreatedAt(dto.getLocalCreatedAt());
+                    event.setLocalCreatedAt(dto.getLocal_created_at());
                     Event savedEvent = eventRepository.save(event);
                     return ResponseEntity.status(HttpStatus.CREATED).body(savedEvent);
                 })
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
-    public ResponseEntity<List<Event>> findByParameters(SearchEventsDto dto) {
-        List<Event> result = eventRepository.findEventsByCriteria(dto.getName(), dto.getBegin(), dto.getEnd());
+    public ResponseEntity<List<Event>> findByParameters(String text, LocalDateTime begin, LocalDateTime end) {
+        if (text == null) {
+            text = "";
+        }
+        List<Event> result = eventRepository.findEventsByCriteria(text, begin, end);
         return ResponseEntity.ok(result);
-    }
-
-    public ResponseEntity<List<Event>> findAll(){
-        return ResponseEntity.ok(eventRepository.findAll());
     }
 }

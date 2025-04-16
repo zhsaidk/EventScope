@@ -20,7 +20,7 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
             "AND ((CAST(:end AS TIMESTAMP) IS NULL) OR (e.localCreatedAt <= :end))")
     List<Event> findEventsByCriteria(
             @Param("name") String name,
-            @Param("begin") Timestamp begin,
-            @Param("end") Timestamp end
+            @Param("begin") LocalDateTime begin,
+            @Param("end") LocalDateTime end
     );
 }

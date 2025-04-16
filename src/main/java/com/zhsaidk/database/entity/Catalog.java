@@ -38,7 +38,10 @@ public class Catalog {
     private Project project;
 
     @Length(max = 50)
-    String version;
+    private String version;
+
+    @Length(max = 255)
+    private String slug;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

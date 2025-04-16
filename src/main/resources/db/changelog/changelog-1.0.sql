@@ -15,7 +15,7 @@ CREATE TABLE project
 CREATE TABLE catalog
 (
     id          SERIAL PRIMARY KEY,
-    project_id  INT references project (id),
+    project_id  INT references project (id) on delete cascade ,
     name        VARCHAR(255) NOT NULL,
     description VARCHAR(255) NOT NULL,
     active      BOOLEAN   default true,
@@ -28,7 +28,7 @@ CREATE TABLE catalog
 CREATE TABLE event
 (
     id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    catalog_id       INT references catalog (id),
+    catalog_id       INT references catalog (id) on delete cascade ,
     name             VARCHAR(255),
     parameters       jsonb,
     local_created_at timestamp,

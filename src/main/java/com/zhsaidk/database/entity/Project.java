@@ -3,6 +3,7 @@ package com.zhsaidk.database.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.validator.constraints.Length;
 
 import java.sql.Timestamp;
 
@@ -19,6 +20,9 @@ public class Project {
     private String name;
 
     private String description;
+
+    @Length(max = 255)
+    private String slug;
 
     private Boolean active;
 
