@@ -5,7 +5,8 @@ window.createProject = function() {
         active: document.getElementById("active").checked
     };
 
-    fetch(`/api/v3/projects/build`, {
+    // Отправка данных нового проекта на сервер для его создания
+    fetch(`/api/v3/projects`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -17,10 +18,7 @@ window.createProject = function() {
                 throw new Error(`Failed to create project: ${response.status}`);
             }
             alert("Project created successfully");
-            // Clear form
-            document.getElementById("name").value = "";
-            document.getElementById("description").value = "";
-            document.getElementById("active").checked = false;
+            window.location.href = "/projects";  // Перенаправление на страницу проектов
         })
         .catch(error => {
             console.error("Error creating project:", error);

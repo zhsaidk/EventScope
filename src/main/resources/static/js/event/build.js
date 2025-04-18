@@ -1,23 +1,73 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // Set default value for localCreatedAt to current timestamp
     const localCreatedAtInput = document.getElementById("localCreatedAt");
     const now = new Date();
-    localCreatedAtInput.value = now.toISOString().slice(0, 16); // Format for datetime-local
+    localCreatedAtInput.value = now.toISOString().slice(0, 16); // yyyy-MM-ddTHH:mm
+
+    const projectSelect = document.getElementById("projectSelect");
+    const catalogSelect = document.getElementById("catalogSelect");
+    let allCatalogs = [];
+
+    fetch("/api/v3/projects")
+        .then(response => response.json())
+        .then(projects => {
+            projects.forEach(project => {
+                const option = document.createElement("option");
+                option.value = project.slug;
+                option.textContent = project.name;
+                projectSelect.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error("Error fetching projects:", error);
+            alert("Failed to load projects");
+        });
+
+    fetch("/api/v3/projects/catalogs")
+        .then(response => response.json())
+        .then(catalogs => {
+            allCatalogs = catalogs;
+            populateCatalogs("");
+        })
+        .catch(error => {
+            console.error("Error fetching catalogs:", error);
+            alert("Failed to load catalogs");
+        });
+
+    function populateCatalogs(projectSlug) {
+        catalogSelect.innerHTML = '<option value="">Select a catalog</option>';
+        allCatalogs
+            .filter(catalog => !projectSlug || catalog.project.slug === projectSlug)
+            .forEach(catalog => {
+                const option = document.createElement("option");
+                option.value = catalog.id;
+                option.textContent = catalog.name;
+                option.dataset.slug = catalog.slug;
+                catalogSelect.appendChild(option);
+            });
+    }
+
+    projectSelect.addEventListener("change", () => {
+        const selectedProjectSlug = projectSelect.value;
+        populateCatalogs(selectedProjectSlug);
+    });
 });
 
-window.createProject = function() {
-    const name = document.getElementById("name").value;
-    const catalogId = parseInt(document.getElementById("catalogId").value);
+window.submitEventForm = function () {
+    const name = document.getElementById("name").value.trim();
+    const projectSelect = document.getElementById("projectSelect");
+    const catalogSelect = document.getElementById("catalogSelect");
+    const projectSlug = projectSelect.value;
+    const catalogId = parseInt(catalogSelect.value);
+    const selectedOption = catalogSelect.selectedOptions[0];
+    const catalogSlug = selectedOption?.dataset.slug;
     const parametersInput = document.getElementById("parameters").value.trim();
-    const localCreatedAt = document.getElementById("localCreatedAt").value;
+    const localCreatedAtRaw = document.getElementById("localCreatedAt").value;
 
-    // Validate required inputs
-    if (!name || isNaN(catalogId) || !localCreatedAt) {
-        alert("Name, Catalog ID, and Created At are required");
+    if (!name || !projectSlug || isNaN(catalogId) || !catalogSlug || !localCreatedAtRaw) {
+        alert("Name, Project, Catalog, and Created At are required");
         return;
     }
 
-    // Handle parameters: empty input becomes {}
     let parameters = {};
     if (parametersInput) {
         try {
@@ -28,34 +78,39 @@ window.createProject = function() {
         }
     }
 
-    const newProject = {
+    // Форматируем дату в yyyy-MM-ddTHH:mm:ss
+    const localCreatedAt = localCreatedAtRaw + ":00";
+
+    const newEvent = {
         name,
         catalogId,
         parameters,
-        localCreatedAt: new Date(localCreatedAt).toISOString()
+        localCreatedAt
     };
 
-    fetch(`/api/v3/projects/catalogs/events/build`, {
+    fetch(`/api/v3/${projectSlug}/${catalogSlug}/events`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
-        body: JSON.stringify(newProject)
+        body: JSON.stringify(newEvent)
     })
         .then(response => {
             if (!response.ok) {
-                throw new Error(`Failed to create project: ${response.status}`);
+                throw new Error(`Failed to create event: ${response.status}`);
             }
-            alert("Project created successfully");
-            // Clear form
+            alert("Event created successfully");
+
+            // Reset form
             document.getElementById("name").value = "";
-            document.getElementById("catalogId").value = "";
+            projectSelect.value = "";
+            catalogSelect.innerHTML = '<option value="">Select a catalog</option>';
             document.getElementById("parameters").value = "";
             const now = new Date();
             document.getElementById("localCreatedAt").value = now.toISOString().slice(0, 16);
         })
         .catch(error => {
-            console.error("Error creating project:", error);
-            alert("Failed to create project");
+            console.error("Error creating event:", error);
+            alert("Failed to create event");
         });
 };

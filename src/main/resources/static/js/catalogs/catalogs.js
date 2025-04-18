@@ -11,12 +11,12 @@ const App = () => {
             .catch(error => console.error('Error fetching catalogs:', error));
     }, []);
 
-    const handleDelete = (id) => {
+    const handleDelete = (projectSlug, catalogSlug) => {
         if (window.confirm('Are you sure you want to delete this catalog?')) {
-            fetch(`/api/v3/projects/catalogs/${id}`, { method: 'DELETE' })
+            fetch(`/api/v3/${projectSlug}/${catalogSlug}`, { method: 'DELETE' })
                 .then(response => {
                     if (response.ok) {
-                        setCatalogs(catalogs.filter(catalog => catalog.id !== id));
+                        setCatalogs(catalogs.filter(c => c.slug !== catalogSlug));
                     } else {
                         alert('Failed to delete catalog');
                     }
@@ -25,12 +25,25 @@ const App = () => {
         }
     };
 
+    const getProjectSlugForCreate = () => {
+        // If a project is selected, use its slug; otherwise, use a fallback or prompt
+        if (selectedProject) {
+            return encodeURIComponent(selectedProject.slug);
+        }
+        // Fallback: Use the first catalog's project slug or a default
+        if (catalogs.length > 0) {
+            return encodeURIComponent(catalogs[0].project.slug);
+        }
+        // If no catalogs exist, you might want to redirect to a project selection page or use a default
+        return 'default-project-slug'; // Replace with actual logic or prompt
+    };
+
     const renderCatalogTable = () => (
         <div className="table-container">
             <table>
                 <thead>
                 <tr>
-                    <th>ID</th>
+                    <th>Id</th>
                     <th>Name</th>
                     <th>Description</th>
                     <th>Active</th>
@@ -41,7 +54,7 @@ const App = () => {
                 </thead>
                 <tbody>
                 {catalogs.map(catalog => (
-                    <tr key={catalog.id}>
+                    <tr key={catalog.slug}>
                         <td>{catalog.id}</td>
                         <td>{catalog.name}</td>
                         <td>{catalog.description}</td>
@@ -57,13 +70,13 @@ const App = () => {
                             </button>
                             <button
                                 className="details-btn"
-                                onClick={() => window.location.href = `/projects/catalogs/${catalog.id}`}
+                                onClick={() => window.location.href = `/projects/catalogs/${encodeURIComponent(catalog.slug)}?projectSlug=${encodeURIComponent(catalog.project.slug)}`}
                             >
                                 Details
                             </button>
                             <button
                                 className="delete-btn"
-                                onClick={() => handleDelete(catalog.id)}
+                                onClick={() => handleDelete(catalog.project.slug, catalog.slug)}
                             >
                                 Delete
                             </button>
@@ -74,9 +87,9 @@ const App = () => {
             </table>
             <button
                 className="create-btn"
-                onClick={() => window.location.href = '/projects/catalogs/build'}
+                onClick={() => window.location.href = `/projects`}
             >
-                Create New Catalog
+                Back
             </button>
         </div>
     );
@@ -87,7 +100,7 @@ const App = () => {
             <table>
                 <thead>
                 <tr>
-                    <th>ID</th>
+                    <th>Slug</th>
                     <th>Name</th>
                     <th>Description</th>
                     <th>Active</th>
@@ -96,7 +109,7 @@ const App = () => {
                 </thead>
                 <tbody>
                 <tr>
-                    <td>{selectedProject.id}</td>
+                    <td>{selectedProject.slug}</td>
                     <td>{selectedProject.name}</td>
                     <td>{selectedProject.description || 'N/A'}</td>
                     <td>{selectedProject.active ? 'Yes' : 'No'}</td>

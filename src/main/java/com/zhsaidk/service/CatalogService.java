@@ -48,7 +48,7 @@ public class CatalogService {
         String slug = baseSlug;
         int counter = 1;
 
-        while (projectRepository.existsBySlug(slug)) {
+        while (catalogRepository.existsBySlug(slug)) {
             slug = baseSlug + "-" + counter++;
         }
 

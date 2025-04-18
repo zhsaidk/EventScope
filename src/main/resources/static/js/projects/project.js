@@ -1,9 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // Extract project ID from URL (e.g., /projects/123)
-    const projectId = window.location.pathname.split("/").pop();
+    // Получаем slug проекта из URL
+    const projectSlug = window.location.pathname.split("/").pop();
 
-    // Fetch project details
-    fetch(`/api/v3/projects/${projectId}`)
+    // Запрос на сервер для получения данных проекта по slug
+    fetch(`/api/v3/${projectSlug}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`Failed to fetch project: ${response.status}`);
@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return response.json();
         })
         .then(project => {
-            // Populate form fields
+            // Заполнение формы данными проекта
             document.getElementById("name").value = project.name || "";
             document.getElementById("description").value = project.description || "";
             document.getElementById("active").checked = project.active;
@@ -23,14 +23,16 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 window.updateProject = function() {
-    const projectId = window.location.pathname.split("/").pop();
+    const projectSlug = window.location.pathname.split("/").pop(); // получаем slug из URL
+
     const updatedProject = {
         name: document.getElementById("name").value,
         description: document.getElementById("description").value || null,
         active: document.getElementById("active").checked
     };
 
-    fetch(`/api/v3/projects/update/${projectId}`, {
+    // Отправка запроса на сервер для обновления проекта по slug
+    fetch(`/api/v3/${projectSlug}`, {
         method: "PUT",
         headers: {
             "Content-Type": "application/json"

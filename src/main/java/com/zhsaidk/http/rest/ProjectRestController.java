@@ -110,7 +110,7 @@ public class ProjectRestController {
         return catalogService.update(projectSlug, catalogSlug, dto);
     }
 
-    @DeleteMapping("/{projectSlug}/{catalogSlug}")
+    @DeleteMapping("/{projectSlug}/{catalogSlug}")  //todo
     public ResponseEntity<?> removeCatalog(@PathVariable("projectSlug") String projectSlug,
                                            @PathVariable("catalogSlug") String catalogSlug) {
         Project project = projectRepository.findProjectBySlug(projectSlug)
@@ -146,7 +146,7 @@ public class ProjectRestController {
     public ResponseEntity<?> removeEvent(@PathVariable("projectSlug") String projectSlug,
                                          @PathVariable("catalogSlug") String catalogSlug,
                                          @PathVariable("eventId") UUID eventId) {
-        if (checkEvent(eventId, projectSlug, catalogSlug)) return ResponseEntity.badRequest().build();
+        if (isEventInvalid(eventId, projectSlug, catalogSlug)) return ResponseEntity.badRequest().build();
 
         return eventService.remove(eventId)
                 ? ResponseEntity.noContent().build()
@@ -157,20 +157,20 @@ public class ProjectRestController {
     public ResponseEntity<?> getEventById(@PathVariable("projectSlug") String projectSlug,
                                          @PathVariable("catalogSlug") String catalogSlug,
                                          @PathVariable("eventId") UUID eventId) {
-        if (checkEvent(eventId, projectSlug, catalogSlug)) return ResponseEntity.badRequest().build();
+        if (isEventInvalid(eventId, projectSlug, catalogSlug)) return ResponseEntity.badRequest().build();
 
 
         return eventService.getById(eventId);
     }
 
-    @PutMapping("/{projectSlug}/{catalogSlug}/{eventId}")
+    @PutMapping("/{projectSlug}/{catalogSlug}/{eventId}") //todo
     public ResponseEntity<?> updateEvent(@PathVariable("eventId") UUID eventId,
                                          @Valid @RequestBody BuildCreateEventDto dto,
                                          BindingResult bindingResult,
                                          @PathVariable(value = "projectSlug") String projectSlug,
-                                         @PathVariable(value = "catalogId") String catalogSlug) {
+                                         @PathVariable(value = "catalogSlug") String catalogSlug) {
 
-        if (checkEvent(eventId, projectSlug, catalogSlug)) return ResponseEntity.badRequest().build();
+        if (isEventInvalid(eventId, projectSlug, catalogSlug)) return ResponseEntity.badRequest().build();
 
         if (bindingResult.hasErrors()) {
             return ResponseEntity.badRequest().body(bindingResult.getAllErrors());
@@ -178,9 +178,7 @@ public class ProjectRestController {
         return eventService.update(eventId, dto);
     }
 
-    private boolean checkEvent(@PathVariable("eventId") UUID eventId,
-                               @PathVariable("projectSlug") String projectSlug,
-                               @PathVariable("catalogSlug") String catalogSlug) {
+    private boolean isEventInvalid(UUID eventId, String projectSlug, String catalogSlug) { //todo
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found"));
         Catalog catalog = catalogRepository.findCatalogBySlug(catalogSlug)
@@ -188,10 +186,9 @@ public class ProjectRestController {
         Project project = projectRepository.findProjectBySlug(projectSlug)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found"));
 
-        if (!Objects.equals(event.getCatalog().getId(), catalog.getId()) || !Objects.equals(catalog.getProject().getId(), project.getId())){
-            return true;
-        }
-        return false;
+
+        return !(Objects.equals(event.getCatalog().getId(), catalog.getId()) &&
+                Objects.equals(catalog.getProject().getId(), project.getId()));
     }
 
     @GetMapping("/projects/catalogs/events")

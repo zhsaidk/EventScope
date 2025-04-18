@@ -43,11 +43,6 @@ public class ProjectController {
         return "event/events";
     }
 
-    @GetMapping("/catalogs/events/{id}")
-    public String getEventById(){
-        return "event/event";
-    }
-
     @GetMapping("/catalogs/events/build")
     public String getEventBuild(){
         return "event/build";

@@ -3,10 +3,24 @@ const { useState, useEffect } = React;
 const App = () => {
     const [catalog, setCatalog] = useState({ name: '', description: '', active: true, version: '' });
     const [error, setError] = useState(null);
-    const catalogId = window.location.pathname.split('/').pop();
+
+    // Получаем catalogSlug из пути и projectSlug из query string
+    const pathParts = window.location.pathname.split('/');
+    const catalogSlug = pathParts[pathParts.length - 1]; // Последняя часть пути: catalogSlug
+    const params = new URLSearchParams(window.location.search);
+    const projectSlug = params.get('projectSlug'); // Извлекаем projectSlug из ?projectSlug=...
 
     useEffect(() => {
-        fetch(`/api/v3/projects/catalogs/${catalogId}`)
+        if (!catalogSlug) {
+            setError('Catalog slug is missing in URL');
+            return;
+        }
+        if (!projectSlug) {
+            setError('Project slug is missing in URL query');
+            return;
+        }
+
+        fetch(`/api/v3/${projectSlug}/${catalogSlug}`)
             .then(response => {
                 if (!response.ok) throw new Error('Catalog not found');
                 return response.json();
@@ -18,7 +32,7 @@ const App = () => {
                 version: data.version || ''
             }))
             .catch(err => setError(err.message));
-    }, []);
+    }, [catalogSlug, projectSlug]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -30,7 +44,12 @@ const App = () => {
     };
 
     const handleUpdate = () => {
-        fetch(`/api/v3/projects/catalogs/${catalogId}`, {
+        if (!catalogSlug || !projectSlug) {
+            setError('Catalog slug or project slug is missing');
+            return;
+        }
+
+        fetch(`/api/v3/${projectSlug}/${catalogSlug}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(catalog)

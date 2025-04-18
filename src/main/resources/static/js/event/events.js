@@ -13,16 +13,13 @@ const App = () => {
     };
 
     const handleSearch = () => {
-        const payload = {
-            name: filter.name || "" // Отправляем пустую строку, если name не заполнено
-        };
-        if (filter.begin) payload.begin = new Date(filter.begin).toISOString();
-        if (filter.end) payload.end = new Date(filter.end).toISOString();
+        const params = new URLSearchParams();
+        params.append('name', filter.name || '');
+        if (filter.begin) params.append('begin', new Date(filter.begin).toISOString());
+        if (filter.end) params.append('end', new Date(filter.end).toISOString());
 
-        fetch('/api/v3/projects/catalogs/events/search', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+        fetch(`/api/v3/projects/catalogs/events?${params.toString()}`, {
+            method: 'GET'
         })
             .then(response => {
                 if (!response.ok) throw new Error('Failed to fetch events');
@@ -42,7 +39,15 @@ const App = () => {
 
     const handleDelete = (id) => {
         if (window.confirm('Are you sure you want to delete this event?')) {
-            fetch(`/api/v3/projects/catalogs/events/${id}`, { method: 'DELETE' })
+            const event = events.find(event => event.id === id);
+            if (!event || !event.catalog || !event.catalog.project || !event.catalog.project.slug || !event.catalog.slug) {
+                setError('Missing projectSlug or catalogSlug for deletion');
+                return;
+            }
+
+            fetch(`/api/v3/${event.catalog.project.slug}/${event.catalog.slug}/${id}`, {
+                method: 'DELETE'
+            })
                 .then(response => {
                     if (!response.ok) throw new Error('Failed to delete event');
                     setEvents(events.filter(event => event.id !== id));
@@ -52,7 +57,13 @@ const App = () => {
     };
 
     const handleEdit = (id) => {
-        fetch(`/api/v3/projects/catalogs/events/${id}`)
+        const event = events.find(event => event.id === id);
+        if (!event || !event.catalog || !event.catalog.project || !event.catalog.project.slug || !event.catalog.slug) {
+            setError('Missing projectSlug or catalogSlug for fetching event');
+            return;
+        }
+
+        fetch(`/api/v3/${event.catalog.project.slug}/${event.catalog.slug}/${id}`)
             .then(response => {
                 if (!response.ok) throw new Error('Failed to fetch event');
                 return response.json();
@@ -64,6 +75,7 @@ const App = () => {
                     parameters: JSON.stringify(data.parameters || {}, null, 2),
                     localCreatedAt: data.localCreatedAt ? new Date(data.localCreatedAt).toISOString().slice(0, 16) : ''
                 });
+                setError(null);
             })
             .catch(err => setError(err.message));
     };
@@ -77,13 +89,19 @@ const App = () => {
             return;
         }
 
+        const event = events.find(event => event.id === editingEvent.id);
+        if (!event || !event.catalog || !event.catalog.project || !event.catalog.project.slug || !event.catalog.slug) {
+            setError('Missing projectSlug or catalogSlug for update');
+            return;
+        }
+
         const payload = {
             name: editingEvent.name,
             parameters: parsedParameters,
             localCreatedAt: new Date(editingEvent.localCreatedAt).toISOString()
         };
 
-        fetch(`/api/v3/projects/catalogs/events/${editingEvent.id}`, {
+        fetch(`/api/v3/${event.catalog.project.slug}/${event.catalog.slug}/${editingEvent.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -107,107 +125,128 @@ const App = () => {
     };
 
     const renderFilterForm = () => (
-        <div className="filter-form">
-            <div className="form-group">
-                <label>Name</label>
-                <input
-                    type="text"
-                    name="name"
-                    value={filter.name}
-                    onChange={handleInputChange}
-                />
+        <div className="filter-form p-6 bg-white rounded-lg shadow-md mb-6">
+            <div className="flex flex-col md:flex-row md:space-x-4">
+                <div className="form-group flex-1">
+                    <label className="block text-gray-700 font-semibold mb-2">Name</label>
+                    <input
+                        type="text"
+                        name="name"
+                        value={filter.name}
+                        onChange={handleInputChange}
+                        className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                </div>
+                <div className="form-group flex-1">
+                    <label className="block text-gray-700 font-semibold mb-2">Begin Date</label>
+                    <input
+                        type="datetime-local"
+                        name="begin"
+                        value={filter.begin}
+                        onChange={handleInputChange}
+                        className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                </div>
+                <div className="form-group flex-1">
+                    <label className="block text-gray-700 font-semibold mb-2">End Date</label>
+                    <input
+                        type="datetime-local"
+                        name="end"
+                        value={filter.end}
+                        onChange={handleInputChange}
+                        className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                </div>
             </div>
-            <div className="form-group">
-                <label>Begin Date</label>
-                <input
-                    type="datetime-local"
-                    name="begin"
-                    value={filter.begin}
-                    onChange={handleInputChange}
-                />
+            <div className="mt-4 flex space-x-4">
+                <button
+                    className="search-btn bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition"
+                    onClick={handleSearch}
+                >
+                    Search Events
+                </button>
+                <button
+                    className="create-btn bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition"
+                    onClick={() => window.location.href = '/projects/catalogs/events/build'}
+                >
+                    Create Event
+                </button>
             </div>
-            <div className="form-group">
-                <label>End Date</label>
-                <input
-                    type="datetime-local"
-                    name="end"
-                    value={filter.end}
-                    onChange={handleInputChange}
-                />
-            </div>
-            <button className="search-btn" onClick={handleSearch}>
-                Search Events
-            </button>
-            <button
-                className="create-btn"
-                onClick={() => window.location.href = '/projects/catalogs/events/build'}
-            >
-                Create Event
-            </button>
         </div>
     );
 
     const renderEditForm = () => (
-        <div className="edit-form">
-            <h2>Edit Event</h2>
-            <div className="form-group">
-                <label>Name</label>
+        <div className="edit-form p-6 bg-white rounded-lg shadow-md mb-6">
+            <h2 className="text-2xl font-bold mb-4">Edit Event</h2>
+            <div className="form-group mb-4">
+                <label className="block text-gray-700 font-semibold mb-2">Name</label>
                 <input
                     type="text"
                     name="name"
                     value={editingEvent.name}
                     onChange={handleEditChange}
+                    className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
             </div>
-            <div className="form-group">
-                <label>Parameters (JSON)</label>
+            <div className="form-group mb-4">
+                <label className="block text-gray-700 font-semibold mb-2">Parameters (JSON)</label>
                 <textarea
                     name="parameters"
                     value={editingEvent.parameters}
                     onChange={handleEditChange}
+                    className="w-full p-2 border rounded-md h-32 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 ></textarea>
             </div>
-            <div className="form-group">
-                <label>Local Created At</label>
+            <div className="form-group mb-4">
+                <label className="block text-gray-700 font-semibold mb-2">Local Created At</label>
                 <input
                     type="datetime-local"
                     name="localCreatedAt"
                     value={editingEvent.localCreatedAt}
                     onChange={handleEditChange}
+                    className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
             </div>
-            <button className="update-btn" onClick={handleUpdate}>
-                Update Event
-            </button>
-            <button className="cancel-btn" onClick={() => setEditingEvent(null)}>
-                Cancel
-            </button>
+            <div className="flex space-x-4">
+                <button
+                    className="update-btn bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition"
+                    onClick={handleUpdate}
+                >
+                    Update Event
+                </button>
+                <button
+                    className="cancel-btn bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition"
+                    onClick={() => setEditingEvent(null)}
+                >
+                    Cancel
+                </button>
+            </div>
         </div>
     );
 
     const renderEventsTable = () => (
-        <div className="table-container">
-            <table>
+        <div className="table-container bg-white rounded-lg shadow-md p-6">
+            <table className="w-full table-auto">
                 <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Local Created At</th>
-                    <th>Created At</th>
-                    <th>Actions</th>
+                <tr className="bg-gray-200">
+                    <th className="px-4 py-2 text-left">ID</th>
+                    <th className="px-4 py-2 text-left">Name</th>
+                    <th className="px-4 py-2 text-left">Local Created At</th>
+                    <th className="px-4 py-2 text-left">Created At</th>
+                    <th className="px-4 py-2 text-left">Actions</th>
                 </tr>
                 </thead>
                 <tbody>
                 {events.map(event => (
                     <React.Fragment key={event.id}>
-                        <tr>
-                            <td>{event.id}</td>
-                            <td>{event.name || 'N/A'}</td>
-                            <td>{event.localCreatedAt ? new Date(event.localCreatedAt).toLocaleString() : 'N/A'}</td>
-                            <td>{event.createdAt ? new Date(event.createdAt).toLocaleString() : 'N/A'}</td>
-                            <td>
+                        <tr className="border-b">
+                            <td className="px-4 py-2">{event.id}</td>
+                            <td className="px-4 py-2">{event.name || 'N/A'}</td>
+                            <td className="px-4 py-2">{event.localCreatedAt ? new Date(event.localCreatedAt).toLocaleString() : 'N/A'}</td>
+                            <td className="px-4 py-2">{event.createdAt ? new Date(event.createdAt).toLocaleString() : 'N/A'}</td>
+                            <td className="px-4 py-2 flex space-x-2">
                                 <button
-                                    className="details-btn"
+                                    className="details-btn bg-purple-500 text-white px-3 py-1 rounded-md hover:bg-purple-600 transition"
                                     onClick={() => setShowCatalogs(prev => ({
                                         ...prev,
                                         [event.id]: !prev[event.id]
@@ -216,13 +255,13 @@ const App = () => {
                                     {showCatalogs[event.id] ? 'Hide Catalog' : 'Show Catalog'}
                                 </button>
                                 <button
-                                    className="edit-btn"
+                                    className="edit-btn bg-yellow-500 text-white px-3 py-1 rounded-md hover:bg-yellow-600 transition"
                                     onClick={() => handleEdit(event.id)}
                                 >
                                     Edit
                                 </button>
                                 <button
-                                    className="delete-btn"
+                                    className="delete-btn bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition"
                                     onClick={() => handleDelete(event.id)}
                                 >
                                     Delete
@@ -231,27 +270,27 @@ const App = () => {
                         </tr>
                         {showCatalogs[event.id] && (
                             <tr>
-                                <td colSpan="5">
-                                    <div className="table-container">
-                                        <table>
+                                <td colSpan="5" className="px-4 py-2">
+                                    <div className="table-container bg-gray-50 p-4 rounded-md">
+                                        <table className="w-full table-auto">
                                             <thead>
-                                            <tr>
-                                                <th>ID</th>
-                                                <th>Name</th>
-                                                <th>Description</th>
-                                                <th>Active</th>
-                                                <th>Version</th>
-                                                <th>Created At</th>
+                                            <tr className="bg-gray-100">
+                                                <th className="px-4 py-2 text-left">ID</th>
+                                                <th className="px-4 py-2 text-left">Name</th>
+                                                <th className="px-4 py-2 text-left">Description</th>
+                                                <th className="px-4 py-2 text-left">Active</th>
+                                                <th className="px-4 py-2 text-left">Version</th>
+                                                <th className="px-4 py-2 text-left">Created At</th>
                                             </tr>
                                             </thead>
                                             <tbody>
                                             <tr>
-                                                <td>{event.catalog.id}</td>
-                                                <td>{event.catalog.name}</td>
-                                                <td>{event.catalog.description}</td>
-                                                <td>{event.catalog.active ? 'Yes' : 'No'}</td>
-                                                <td>{event.catalog.version || 'N/A'}</td>
-                                                <td>{event.catalog.createdAt ? new Date(event.catalog.createdAt).toLocaleString() : 'N/A'}</td>
+                                                <td className="px-4 py-2">{event.catalog.id}</td>
+                                                <td className="px-4 py-2">{event.catalog.name}</td>
+                                                <td className="px-4 py-2">{event.catalog.description}</td>
+                                                <td className="px-4 py-2">{event.catalog.active ? 'Yes' : 'No'}</td>
+                                                <td className="px-4 py-2">{event.catalog.version || 'N/A'}</td>
+                                                <td className="px-4 py-2">{event.catalog.createdAt ? new Date(event.catalog.createdAt).toLocaleString() : 'N/A'}</td>
                                             </tr>
                                             </tbody>
                                         </table>
@@ -267,12 +306,12 @@ const App = () => {
     );
 
     return (
-        <div className="container">
-            <h1>Events</h1>
+        <div className="container max-w-7xl mx-auto p-6">
+            <h1 className="text-3xl font-bold mb-6">Events</h1>
             {renderFilterForm()}
-            {error && <div className="error">{error}</div>}
+            {error && <div className="error bg-red-100 text-red-700 p-4 rounded-md mb-6">{error}</div>}
             {editingEvent && renderEditForm()}
-            {events && events.length > 0 ? renderEventsTable() : events && <div className="error">No events found</div>}
+            {events && events.length > 0 ? renderEventsTable() : events && <div className="error bg-yellow-100 text-yellow-700 p-4 rounded-md mb-6">No events found</div>}
         </div>
     );
 };

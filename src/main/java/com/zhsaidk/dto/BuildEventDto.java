@@ -15,5 +15,5 @@ public class BuildEventDto {
     JsonNode parameters;
 
     @NotNull(message = "Field localCreatedAt must be not null")
-    Timestamp local_created_at;
+    Timestamp localCreatedAt;
 }

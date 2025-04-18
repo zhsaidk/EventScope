@@ -42,7 +42,7 @@ public class EventService {
                 .name(dto.getName())
                 .parameters(dto.getParameters())
                 .catalog(catalog)
-                .localCreatedAt(dto.getLocal_created_at())
+                .localCreatedAt(dto.getLocalCreatedAt())
                 .build());
 
         return ResponseEntity.ok(savedEvent);
@@ -70,7 +70,7 @@ public class EventService {
                     event.setName(dto.getName());
                     event.setCatalog(event.getCatalog());
                     event.setParameters(dto.getParameters());
-                    event.setLocalCreatedAt(dto.getLocal_created_at());
+                    event.setLocalCreatedAt(dto.getLocalCreatedAt());
                     Event savedEvent = eventRepository.save(event);
                     return ResponseEntity.status(HttpStatus.CREATED).body(savedEvent);
                 })

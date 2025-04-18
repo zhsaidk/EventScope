@@ -32,7 +32,8 @@ label {
 input[type="text"],
 input[type="datetime-local"],
 input[type="number"],
-textarea {
+textarea,
+select {
     width: 100%;
     padding: 8px;
     border: 1px solid #ddd;
@@ -42,6 +43,10 @@ textarea {
 textarea {
     resize: vertical;
     min-height: 100px;
+}
+select {
+    background-color: #fff;
+    cursor: pointer;
 }
 button {
     padding: 8px 16px;
