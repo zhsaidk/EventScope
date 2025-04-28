@@ -88,4 +88,8 @@ public class CatalogService {
         return catalogRepository.findCatalogBySlug(slug)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Catalog not found"));
     }
+
+    public List<Catalog> findAllCatalogsByProjectSlug(String projectSlug){
+        return catalogRepository.findAllCatalogsByProjectSlug(projectSlug);
+    }
 }

@@ -2,15 +2,12 @@ package com.zhsaidk.service;
 
 import com.zhsaidk.database.entity.Catalog;
 import com.zhsaidk.database.entity.Event;
-import com.zhsaidk.database.entity.Project;
 import com.zhsaidk.database.repo.CatalogRepository;
 import com.zhsaidk.database.repo.EventRepository;
 import com.zhsaidk.database.repo.EventSpecification;
 import com.zhsaidk.database.repo.ProjectRepository;
 import com.zhsaidk.dto.BuildCreateEventDto;
 import com.zhsaidk.dto.BuildEventDto;
-import com.zhsaidk.dto.SearchEventsDto;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -19,9 +16,7 @@ import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -83,5 +78,9 @@ public class EventService {
     public ResponseEntity<PagedModel<Event>> findByParameters(String text, LocalDateTime begin, LocalDateTime end, Integer pageNumber, Integer size) {
         Page<Event> page = eventRepository.findAll(EventSpecification.byCriteria(text, begin, end), PageRequest.of(pageNumber, size, Sort.by("localCreatedAt")));
         return ResponseEntity.ok(new PagedModel<>(page));
+    }
+
+    public List<Event> findAllEventsByCatalogSlug(String catalogSlug){
+        return eventRepository.findAllEventsByCatalogSlug(catalogSlug);
     }
 }

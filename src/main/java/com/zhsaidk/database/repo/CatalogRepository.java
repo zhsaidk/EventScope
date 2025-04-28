@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -19,4 +20,7 @@ public interface CatalogRepository extends JpaRepository<Catalog, Integer> {
 
     @Query("select count(c) > 0 from Catalog c where c.slug = :catalogSlug and c.project.slug = :projectSlug")
     boolean existsBySlugAndProjectSlug(String catalogSlug, String projectSlug);
+
+    @Query("select c from Catalog c where c.project.slug =:projectSlug")
+    List<Catalog> findAllCatalogsByProjectSlug(String projectSlug);
 }

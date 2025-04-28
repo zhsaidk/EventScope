@@ -35,6 +35,8 @@ public class Event {
     @JdbcTypeCode(SqlTypes.JSON) //jackson и hibernate 6.x
     private JsonNode parameters;
 
+    private Integer time;
+
     @Column(name = "local_created_at")
     private Timestamp localCreatedAt;
 

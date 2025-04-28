@@ -23,7 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     row.setAttribute("data-slug", project.slug);
                     row.innerHTML = `
                         <td>${project.id}</td>
-                        <td>${project.name}</td>
+                        <td><a href="/projects/catalogs/${project.slug}" class="text-blue-500 hover:underline">${project.name}</a></td>
                         <td>${project.description || ""}</td>
                         <td>${project.active}</td>
                         <td>${new Date(project.createdAt).toLocaleString()}</td>

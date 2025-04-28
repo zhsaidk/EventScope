@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>События каталога</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="p-6 bg-gray-100">
+<div class="max-w-6xl mx-auto">
+    <h1 class="text-2xl font-bold mb-6">События каталога: <span th:text="${catalogSlug}"></span></h1>
+
+    <!-- Таблица с событиями -->
+    <table class="w-full border-collapse bg-white shadow-md rounded-lg">
+        <thead>
+        <tr class="bg-gray-200">
+            <th class="p-3 text-left">ID</th>
+            <th class="p-3 text-left">Название</th>
+            <th class="p-3 text-left">Каталог</th>
+            <th class="p-3 text-left">Параметры (JSON)</th>
+            <th class="p-3 text-left">Локальное создание</th>
+            <th class="p-3 text-left">Создан</th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- Итерация по списку events -->
+        <tr th:each="event : ${events}" class="border-b hover:bg-gray-50">
+            <td class="p-3" th:text="${event.id}">UUID</td>
+            <td class="p-3" th:text="${event.name} ?: '—'">Название</td>
+            <td class="p-3" th:text="${event.catalog?.name} ?: '—'">Каталог</td>
+            <td class="p-3" th:text="${event.parameters} ?: '—'">JSON</td>
+            <td class="p-3" th:text="${event.localCreatedAt} ? ${#dates.format(event.localCreatedAt, 'dd.MM.yyyy HH:mm')} : '—'">01.01.2023 12:00</td>
+            <td class="p-3" th:text="${#dates.format(event.createdAt, 'dd.MM.yyyy HH:mm')}">01.01.2023 12:00</td>
+        </tr>
+        <!-- Если список пуст -->
+        <tr th:if="${#lists.isEmpty(events)}">
+            <td colspan="6" class="p-3 text-center text-gray-500">События не найдены</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <!-- Ссылка для возврата к каталогам -->
+    <a th:href="@{/projects/catalogs/{slug}(slug=${catalogSlug})}" class="mt-6 inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+        Назад к каталогам
+    </a>
+</div>
+</body>
+</html>
