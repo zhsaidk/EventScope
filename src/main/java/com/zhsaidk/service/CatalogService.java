@@ -9,6 +9,8 @@ import com.zhsaidk.dto.BuildReadCatalogDto;
 import com.zhsaidk.util.SlugUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -23,20 +25,17 @@ public class CatalogService {
     private final CatalogRepository catalogRepository;
     private final ProjectRepository projectRepository;
 
-    public ResponseEntity<List<Catalog>> findAll() {
-        return ResponseEntity.ok(catalogRepository.findAll());
+    public ResponseEntity<PagedModel<Catalog>> findAll(PageRequest pageRequest) {
+        return ResponseEntity.ok(new PagedModel<>(catalogRepository.findAll(pageRequest)));
     }
 
     public ResponseEntity<?> findById(String projectSlug, String catalogSlug) {
-        Project project = projectRepository.findProjectBySlug(projectSlug)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found"));
-        Catalog catalog = catalogRepository.findCatalogBySlug(catalogSlug)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Catalog not fount"));
-
-        if (project == null || catalog == null || !Objects.equals(catalog.getProject().getId(), project.getId())) {
+        if(!catalogRepository.existsBySlugAndProjectSlug(catalogSlug, projectSlug)){
             return ResponseEntity.badRequest().build();
         }
 
+        Catalog catalog = catalogRepository.findCatalogBySlug(catalogSlug)
+                .orElse(null);
         return ResponseEntity.ok(catalog);
     }
 
@@ -44,19 +43,10 @@ public class CatalogService {
         Project project = projectRepository.findProjectBySlug(projectSlug)
                 .orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found"));
 
-        String baseSlug = SlugUtil.toSlug(dto.getName());
-        String slug = baseSlug;
-        int counter = 1;
-
-        while (catalogRepository.existsBySlug(slug)) {
-            slug = baseSlug + "-" + counter++;
-        }
-
         Catalog savedCatalog = catalogRepository.save(Catalog.builder()
                 .name(dto.getName())
                 .description(dto.getDescription())
                 .project(project)
-                .slug(slug)
                 .active(dto.getActive())
                 .version(dto.getVersion())
                 .build());
@@ -65,14 +55,11 @@ public class CatalogService {
     }
 
     public ResponseEntity<?> update(String projectSlug, String catalogSlug, BuildReadCatalogDto dto) {
-        Project project = projectRepository.findProjectBySlug(projectSlug)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        Catalog catalog = catalogRepository.findCatalogBySlug(catalogSlug)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-
-        if (project == null || catalog == null || !Objects.equals(catalog.getProject().getId(), project.getId())) {
+        if(!catalogRepository.existsBySlugAndProjectSlug(catalogSlug, projectSlug)){
             return ResponseEntity.badRequest().build();
         }
+        Project project = projectRepository.findProjectBySlug(projectSlug)
+                .orElse(null);
 
         return catalogRepository.findCatalogBySlug(catalogSlug)
                 .map(current -> {

@@ -82,3 +82,30 @@ button {
 .table-container {
     overflow-x: auto;
 }
+.pagination-container {
+    margin-top: 20px;
+    text-align: center;
+}
+.pagination-btn {
+    background-color: #007bff;
+    color: white;
+}
+.pagination-btn:hover:not(:disabled) {
+    background-color: #0056b3;
+}
+.pagination-btn:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+.page-info {
+    margin: 0 10px;
+    font-size: 16px;
+}
+.page-input {
+    width: 60px;
+    padding: 5px;
+    margin: 0 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}

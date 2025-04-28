@@ -10,6 +10,9 @@ import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -27,8 +30,8 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final ApiKeyRepository apiKeyRepository;
 
-    public List<Project> getAll() {
-        return projectRepository.findAll();
+    public ResponseEntity<PagedModel<Project>> getAll(PageRequest pageRequest) {
+        return ResponseEntity.ok(new PagedModel<>(projectRepository.findAll(pageRequest)));
     }
 
     public ResponseEntity<?> getById(String projectSlug) {
@@ -39,18 +42,9 @@ public class ProjectService {
 
     @Transactional
     public ResponseEntity<Project> build(BuildProjectDTO dto) {
-        String baseSlug = SlugUtil.toSlug(dto.getName());
-        String slug = baseSlug;
-        int counter = 1;
-
-        while (projectRepository.existsBySlug(slug)) {
-            slug = baseSlug + "-" + counter++;
-        }
-
         Project savedProject = projectRepository.save(Project.builder()
                 .name(dto.getName())
                 .description(dto.getDescription())
-                .slug(slug)
                 .active(dto.getActive())
                 .build());
         return ResponseEntity.status(HttpStatus.CREATED).body(savedProject);

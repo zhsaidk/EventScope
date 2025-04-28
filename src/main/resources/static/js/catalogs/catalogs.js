@@ -3,13 +3,23 @@ const { useState, useEffect } = React;
 const App = () => {
     const [catalogs, setCatalogs] = useState([]);
     const [selectedProject, setSelectedProject] = useState(null);
+    const [currentPage, setCurrentPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
 
     useEffect(() => {
-        fetch('/api/v3/projects/catalogs')
+        fetchCatalogs(currentPage);
+    }, [currentPage]);
+
+    const fetchCatalogs = (page) => {
+        fetch(`/api/v3/projects/catalogs?page=${page}`)
             .then(response => response.json())
-            .then(data => setCatalogs(data))
+            .then(data => {
+                setCatalogs(data.content);
+                setTotalPages(data.page.totalPages);
+                setCurrentPage(data.page.number);
+            })
             .catch(error => console.error('Error fetching catalogs:', error));
-    }, []);
+    };
 
     const handleDelete = (projectSlug, catalogSlug) => {
         if (window.confirm('Are you sure you want to delete this catalog?')) {
@@ -25,17 +35,29 @@ const App = () => {
         }
     };
 
+    const handlePageChange = (newPage) => {
+        if (newPage >= 0 && newPage < totalPages) {
+            setCurrentPage(newPage);
+        }
+    };
+
+    const handlePageInput = (e) => {
+        const page = parseInt(e.target.value, 10);
+        if (!isNaN(page) && page >= 1 && page <= totalPages) {
+            setCurrentPage(page - 1); // API uses 0-based indexing
+        } else {
+            alert(`Please enter a valid page number between 1 and ${totalPages}`);
+        }
+    };
+
     const getProjectSlugForCreate = () => {
-        // If a project is selected, use its slug; otherwise, use a fallback or prompt
         if (selectedProject) {
             return encodeURIComponent(selectedProject.slug);
         }
-        // Fallback: Use the first catalog's project slug or a default
         if (catalogs.length > 0) {
             return encodeURIComponent(catalogs[0].project.slug);
         }
-        // If no catalogs exist, you might want to redirect to a project selection page or use a default
-        return 'default-project-slug'; // Replace with actual logic or prompt
+        return 'default-project-slug';
     };
 
     const renderCatalogTable = () => (
@@ -85,6 +107,33 @@ const App = () => {
                 ))}
                 </tbody>
             </table>
+            <div className="pagination-container">
+                <button
+                    className="pagination-btn"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 0}
+                >
+                    Previous
+                </button>
+                <span className="page-info">Page {currentPage + 1} of {totalPages}</span>
+                <label htmlFor="pageInput">Go to page: </label>
+                <input
+                    id="pageInput"
+                    type="number"
+                    min="1"
+                    max={totalPages}
+                    value={currentPage + 1}
+                    onChange={handlePageInput}
+                    className="page-input"
+                />
+                <button
+                    className="pagination-btn"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage >= totalPages - 1}
+                >
+                    Next
+                </button>
+            </div>
             <button
                 className="create-btn"
                 onClick={() => window.location.href = `/projects`}

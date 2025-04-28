@@ -12,15 +12,15 @@ import com.zhsaidk.service.EventService;
 import com.zhsaidk.service.ProjectService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 @RestController
@@ -31,12 +31,11 @@ public class ProjectRestController {
     private final CatalogService catalogService;
     private final EventService eventService;
     private final CatalogRepository catalogRepository;
-    private final ProjectRepository projectRepository;
-    private final EventRepository eventRepository;
 
     @GetMapping("/projects")
-    public ResponseEntity<List<Project>> getAllProject() {
-        return ResponseEntity.ok(projectService.getAll());
+    public ResponseEntity<PagedModel<Project>> getAllProject(@RequestParam(value = "page", defaultValue = "0") Integer page,
+                                                             @RequestParam(value = "size", defaultValue = "10") Integer size) {
+        return projectService.getAll(PageRequest.of(page, size, Sort.by("createdAt")));
     }
 
     @GetMapping("/{projectSlug}")
@@ -74,8 +73,9 @@ public class ProjectRestController {
 
 
     @GetMapping("/projects/catalogs")
-    public ResponseEntity<List<Catalog>> getAllCatalogs() {
-        return catalogService.findAll();
+    public ResponseEntity<PagedModel<Catalog>> getAllCatalogs(@RequestParam(value = "page", defaultValue = "0") Integer page,
+                                                              @RequestParam(value = "szie", defaultValue = "10") Integer size) {
+        return catalogService.findAll(PageRequest.of(page, size, Sort.by("createdAt")));
     }
 
     @GetMapping("/{projectSlug}/{catalogSlug}")
@@ -89,9 +89,6 @@ public class ProjectRestController {
     public ResponseEntity<?> buildCatalog(@Valid @RequestBody BuildCreateCatalogDto dto,
                                           BindingResult bindingResult,
                                           @PathVariable("projectSlug") String projectSlug) {
-        if (!projectRepository.existsBySlug(projectSlug)) {
-            return ResponseEntity.notFound().build();
-        }
         if (bindingResult.hasErrors()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(bindingResult.getAllErrors());
         }
@@ -113,15 +110,10 @@ public class ProjectRestController {
     @DeleteMapping("/{projectSlug}/{catalogSlug}")  //todo
     public ResponseEntity<?> removeCatalog(@PathVariable("projectSlug") String projectSlug,
                                            @PathVariable("catalogSlug") String catalogSlug) {
-        Project project = projectRepository.findProjectBySlug(projectSlug)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Не найден проект"));
-
-        Catalog catalog = catalogRepository.findCatalogBySlug(catalogSlug)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Не найден каталог"));
-
-        if (!Objects.equals(catalog.getProject().getId(), project.getId())) {
+        if (!catalogRepository.existsBySlugAndProjectSlug(catalogSlug, projectSlug)) {
             return ResponseEntity.badRequest().build();
         }
+        ;
 
         return catalogService.remove(catalogSlug)
                 ? ResponseEntity.noContent().build()
@@ -137,7 +129,7 @@ public class ProjectRestController {
                                         @PathVariable(value = "projectSlug") String projectSlug,
                                         @PathVariable(value = "catalogSlug") String catalogSlug) {
         if (bindingResult.hasErrors()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(bindingResult.getAllErrors());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
         return eventService.build(dto, projectSlug, catalogSlug);
     }
@@ -146,7 +138,9 @@ public class ProjectRestController {
     public ResponseEntity<?> removeEvent(@PathVariable("projectSlug") String projectSlug,
                                          @PathVariable("catalogSlug") String catalogSlug,
                                          @PathVariable("eventId") UUID eventId) {
-        if (isEventInvalid(eventId, projectSlug, catalogSlug)) return ResponseEntity.badRequest().build();
+        if (!catalogRepository.existsBySlugAndProjectSlug(catalogSlug, projectSlug)) {
+            return ResponseEntity.badRequest().build();
+        }
 
         return eventService.remove(eventId)
                 ? ResponseEntity.noContent().build()
@@ -155,11 +149,11 @@ public class ProjectRestController {
 
     @GetMapping("/{projectSlug}/{catalogSlug}/{eventId}")
     public ResponseEntity<?> getEventById(@PathVariable("projectSlug") String projectSlug,
-                                         @PathVariable("catalogSlug") String catalogSlug,
-                                         @PathVariable("eventId") UUID eventId) {
-        if (isEventInvalid(eventId, projectSlug, catalogSlug)) return ResponseEntity.badRequest().build();
-
-
+                                          @PathVariable("catalogSlug") String catalogSlug,
+                                          @PathVariable("eventId") UUID eventId) {
+        if (!catalogRepository.existsBySlugAndProjectSlug(catalogSlug, projectSlug)) {
+            return ResponseEntity.badRequest().build();
+        }
         return eventService.getById(eventId);
     }
 
@@ -169,8 +163,9 @@ public class ProjectRestController {
                                          BindingResult bindingResult,
                                          @PathVariable(value = "projectSlug") String projectSlug,
                                          @PathVariable(value = "catalogSlug") String catalogSlug) {
-
-        if (isEventInvalid(eventId, projectSlug, catalogSlug)) return ResponseEntity.badRequest().build();
+        if (!catalogRepository.existsBySlugAndProjectSlug(catalogSlug, projectSlug)) {
+            return ResponseEntity.badRequest().build();
+        }
 
         if (bindingResult.hasErrors()) {
             return ResponseEntity.badRequest().body(bindingResult.getAllErrors());
@@ -178,23 +173,12 @@ public class ProjectRestController {
         return eventService.update(eventId, dto);
     }
 
-    private boolean isEventInvalid(UUID eventId, String projectSlug, String catalogSlug) { //todo
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found"));
-        Catalog catalog = catalogRepository.findCatalogBySlug(catalogSlug)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Catalog not found"));
-        Project project = projectRepository.findProjectBySlug(projectSlug)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found"));
-
-
-        return !(Objects.equals(event.getCatalog().getId(), catalog.getId()) &&
-                Objects.equals(catalog.getProject().getId(), project.getId()));
-    }
-
     @GetMapping("/projects/catalogs/events")
-    public ResponseEntity<?> getAllEvents(@RequestParam(name = "text", required = false) String text,
-                                          @RequestParam(name = "begin", required = false) LocalDateTime begin,
-                                          @RequestParam(name = "end", required = false) LocalDateTime end) {
-        return eventService.findByParameters(text, begin, end);
+    public ResponseEntity<PagedModel<Event>> getAllEvents(@RequestParam(name = "name", required = false) String name,
+                                                          @RequestParam(name = "begin", required = false) LocalDateTime begin,
+                                                          @RequestParam(name = "end", required = false) LocalDateTime end,
+                                                          @RequestParam(name = "page", defaultValue = "0") Integer page,
+                                                          @RequestParam(name = "size", defaultValue = "10") Integer size) {
+        return eventService.findByParameters(name, begin, end, page, size);
     }
 }

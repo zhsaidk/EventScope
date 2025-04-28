@@ -1,6 +1,6 @@
 FROM alpine:latest
 
-RUN apk add  openjdk17
+RUN apk add openjdk17
 
 WORKDIR /app
 

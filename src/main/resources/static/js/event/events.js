@@ -1,22 +1,30 @@
-const { useState } = React;
+const { useState, useEffect } = React;
 
 const App = () => {
     const [filter, setFilter] = useState({ name: '', begin: '', end: '' });
-    const [events, setEvents] = useState(null);
+    const [events, setEvents] = useState(null); // Изначально null, чтобы указать, что данные еще не загружены
     const [error, setError] = useState(null);
     const [showCatalogs, setShowCatalogs] = useState({});
     const [editingEvent, setEditingEvent] = useState(null);
+    const [currentPage, setCurrentPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
+
+    // Загружаем события при монтировании компонента
+    useEffect(() => {
+        fetchEvents(0);
+    }, []);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFilter(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSearch = () => {
+    const fetchEvents = (page = 0) => {
         const params = new URLSearchParams();
         params.append('name', filter.name || '');
         if (filter.begin) params.append('begin', new Date(filter.begin).toISOString());
         if (filter.end) params.append('end', new Date(filter.end).toISOString());
+        params.append('page', page);
 
         fetch(`/api/v3/projects/catalogs/events?${params.toString()}`, {
             method: 'GET'
@@ -26,15 +34,22 @@ const App = () => {
                 return response.json();
             })
             .then(data => {
-                setEvents(data);
+                setEvents(data.content);
+                setTotalPages(data.page.totalPages);
+                setCurrentPage(data.page.number);
                 setShowCatalogs({});
                 setEditingEvent(null);
                 setError(null);
             })
             .catch(err => {
-                setEvents(null);
+                setEvents([]);
                 setError(err.message);
             });
+    };
+
+    const handleSearch = () => {
+        setCurrentPage(0); // Сбрасываем на первую страницу при новом поиске
+        fetchEvents(0);
     };
 
     const handleDelete = (id) => {
@@ -122,6 +137,23 @@ const App = () => {
     const handleEditChange = (e) => {
         const { name, value } = e.target;
         setEditingEvent(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handlePageChange = (newPage) => {
+        if (newPage >= 0 && newPage < totalPages) {
+            setCurrentPage(newPage);
+            fetchEvents(newPage);
+        }
+    };
+
+    const handlePageInput = (e) => {
+        const page = parseInt(e.target.value, 10);
+        if (!isNaN(page) && page >= 1 && page <= totalPages) {
+            setCurrentPage(page - 1); // API использует 0-based индексацию
+            fetchEvents(page - 1);
+        } else {
+            alert(`Please enter a valid page number between 1 and ${totalPages}`);
+        }
     };
 
     const renderFilterForm = () => (
@@ -246,7 +278,7 @@ const App = () => {
                             <td className="px-4 py-2">{event.createdAt ? new Date(event.createdAt).toLocaleString() : 'N/A'}</td>
                             <td className="px-4 py-2 flex space-x-2">
                                 <button
-                                    className="details-btn bg-purple-500 text-white px-3 py-1 rounded-md hover:bg-purple-600 transition"
+                                    className="details-btn bg-purple-500 text-white px-3.reset py-1 rounded-md hover:bg-purple-600 transition"
                                     onClick={() => setShowCatalogs(prev => ({
                                         ...prev,
                                         [event.id]: !prev[event.id]
@@ -302,6 +334,35 @@ const App = () => {
                 ))}
                 </tbody>
             </table>
+            <div className="pagination-container flex justify-center items-center mt-6 space-x-4">
+                <button
+                    className="pagination-btn bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 0}
+                >
+                    Previous
+                </button>
+                <span className="page-info text-gray-700">Page {currentPage + 1} of {totalPages}</span>
+                <div className="flex items-center">
+                    <label htmlFor="pageInput" className="mr-2 text-gray-700">Go to page:</label>
+                    <input
+                        id="pageInput"
+                        type="number"
+                        min="1"
+                        max={totalPages}
+                        value={currentPage + 1}
+                        onChange={handlePageInput}
+                        className="w-16 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                </div>
+                <button
+                    className="pagination-btn bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage >= totalPages - 1}
+                >
+                    Next
+                </button>
+            </div>
         </div>
     );
 
@@ -311,7 +372,13 @@ const App = () => {
             {renderFilterForm()}
             {error && <div className="error bg-red-100 text-red-700 p-4 rounded-md mb-6">{error}</div>}
             {editingEvent && renderEditForm()}
-            {events && events.length > 0 ? renderEventsTable() : events && <div className="error bg-yellow-100 text-yellow-700 p-4 rounded-md mb-6">No events found</div>}
+            {events === null ? (
+                <div className="loading bg-blue-100 text-blue-700 p-4 rounded-md mb-6">Loading events...</div>
+            ) : events.length > 0 ? (
+                renderEventsTable()
+            ) : (
+                <div className="error bg-yellow-100 text-yellow-700 p-4 rounded-md mb-6">No events found</div>
+            )}
         </div>
     );
 };

@@ -5,12 +5,17 @@ import com.zhsaidk.database.entity.Event;
 import com.zhsaidk.database.entity.Project;
 import com.zhsaidk.database.repo.CatalogRepository;
 import com.zhsaidk.database.repo.EventRepository;
+import com.zhsaidk.database.repo.EventSpecification;
 import com.zhsaidk.database.repo.ProjectRepository;
 import com.zhsaidk.dto.BuildCreateEventDto;
 import com.zhsaidk.dto.BuildEventDto;
 import com.zhsaidk.dto.SearchEventsDto;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -28,15 +33,12 @@ public class EventService {
     private final ProjectRepository projectRepository;
 
     public ResponseEntity<?> build(BuildEventDto dto, String projectSlug, String catalogSlug) {
-
-        Catalog catalog = catalogRepository.findCatalogBySlug(catalogSlug)
-                .orElse(null);
-        Project project = projectRepository.findProjectBySlug(projectSlug)
-                .orElse(null);
-
-        if ((catalog == null || project == null) || !Objects.equals(catalog.getProject().getId(), project.getId())) {
+        if (!catalogRepository.existsBySlugAndProjectSlug(catalogSlug, projectSlug)) {
             return ResponseEntity.badRequest().build();
         }
+
+        Catalog catalog = catalogRepository.findCatalogBySlug(catalogSlug)
+                .orElse(null); // теперь это безопаснее, потому что уже проверили
 
         Event savedEvent = eventRepository.save(Event.builder()
                 .name(dto.getName())
@@ -47,6 +49,7 @@ public class EventService {
 
         return ResponseEntity.ok(savedEvent);
     }
+
 
     public Boolean remove(UUID id) {
 
@@ -77,11 +80,8 @@ public class EventService {
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
-    public ResponseEntity<List<Event>> findByParameters(String text, LocalDateTime begin, LocalDateTime end) {
-        if (text == null) {
-            text = "";
-        }
-        List<Event> result = eventRepository.findEventsByCriteria(text, begin, end);
-        return ResponseEntity.ok(result);
+    public ResponseEntity<PagedModel<Event>> findByParameters(String text, LocalDateTime begin, LocalDateTime end, Integer pageNumber, Integer size) {
+        Page<Event> page = eventRepository.findAll(EventSpecification.byCriteria(text, begin, end), PageRequest.of(pageNumber, size, Sort.by("localCreatedAt")));
+        return ResponseEntity.ok(new PagedModel<>(page));
     }
 }

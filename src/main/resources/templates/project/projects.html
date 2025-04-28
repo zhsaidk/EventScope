@@ -21,6 +21,13 @@
     </thead>
     <tbody id="projectsBody"></tbody>
 </table>
+<div id="pagination" class="pagination-container">
+    <button id="prevPage" disabled>Previous</button>
+    <span id="pageInfo">Page 1 of 1</span>
+    <label for="pageInput">Go to page: </label>
+    <input type="number" id="pageInput" min="1" value="1">
+    <button id="nextPage">Next</button>
+</div>
 <div class="create-container">
     <button onclick="window.location.href='/projects/build'" class="create-button">Create Project</button>
     <button onclick="window.location.href='/projects/catalogs/events/build'" class="create-event-button">Create Event</button>

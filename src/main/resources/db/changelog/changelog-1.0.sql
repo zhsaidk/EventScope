@@ -6,6 +6,7 @@ CREATE TABLE project
     id          SERIAL PRIMARY KEY,
     name        VARCHAR(255) NOT NULL,
     description VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) UNIQUE,
     active      BOOLEAN   default true,
     created_at  timestamp default now()
 );
@@ -18,6 +19,7 @@ CREATE TABLE catalog
     project_id  INT references project (id) on delete cascade ,
     name        VARCHAR(255) NOT NULL,
     description VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) UNIQUE,
     active      BOOLEAN   default true,
     version     VARCHAR(255),
     created_at  timestamp default now()
