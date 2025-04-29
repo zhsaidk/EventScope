@@ -28,8 +28,8 @@
             <td class="p-3" th:text="${event.name} ?: '—'">Название</td>
             <td class="p-3" th:text="${event.catalog?.name} ?: '—'">Каталог</td>
             <td class="p-3" th:text="${event.parameters} ?: '—'">JSON</td>
-            <td class="p-3" th:text="${event.localCreatedAt} ? ${#dates.format(event.localCreatedAt, 'dd.MM.yyyy HH:mm')} : '—'">01.01.2023 12:00</td>
-            <td class="p-3" th:text="${#dates.format(event.createdAt, 'dd.MM.yyyy HH:mm')}">01.01.2023 12:00</td>
+            <td class="p-3" th:text="${event.localCreatedAt} ? ${#temporals.format(event.localCreatedAt, 'dd.MM.yyyy HH:mm')} : '—'">01.01.2023 12:00</td>
+            <td class="p-3" th:text="${#temporals.format(event.createdAt, 'dd.MM.yyyy HH:mm')}">01.01.2023 12:00</td>
         </tr>
         <!-- Если список пуст -->
         <tr th:if="${#lists.isEmpty(events)}">

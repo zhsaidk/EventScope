@@ -12,6 +12,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,9 +39,9 @@ public class Event {
     private Integer time;
 
     @Column(name = "local_created_at")
-    private Timestamp localCreatedAt;
+    private LocalDateTime localCreatedAt;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
-    private Timestamp createdAt;
+    private LocalDateTime createdAt;
 }

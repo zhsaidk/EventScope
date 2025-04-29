@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -82,5 +83,9 @@ public class EventService {
 
     public List<Event> findAllEventsByCatalogSlug(String catalogSlug){
         return eventRepository.findAllEventsByCatalogSlug(catalogSlug);
+    }
+
+    public Page<Event> findAllEvents(PageRequest pageRequest, String text, LocalDateTime begin, LocalDateTime end){
+        return eventRepository.findAll(EventSpecification.byCriteria(text, begin, end), pageRequest);
     }
 }

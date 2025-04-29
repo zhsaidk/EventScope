@@ -30,9 +30,14 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final ApiKeyRepository apiKeyRepository;
 
-    public ResponseEntity<PagedModel<Project>> getAll(PageRequest pageRequest) {
-        return ResponseEntity.ok(new PagedModel<>(projectRepository.findAll(pageRequest)));
+    public PagedModel<Project> getAll(PageRequest pageRequest) {
+        return new PagedModel<>(projectRepository.findAll(pageRequest));
     }
+
+    public Page<Project> getAllProjects(PageRequest pageRequest){
+        return projectRepository.findAll(pageRequest);
+    }
+
 
     public ResponseEntity<?> getById(String projectSlug) {
         return projectRepository.findProjectBySlug(projectSlug)
@@ -78,4 +83,7 @@ public class ProjectService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found"));
     }
 
+    public void save(Project project){
+        projectRepository.save(project);
+    }
 }

@@ -1,16 +1,398 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Events App</title>
-    <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.development.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>События</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 24px;
+        }
+        .message {
+            color: #28a745;
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 16px;
+            margin-bottom: 24px;
+            text-align: center;
+            border-radius: 8px;
+        }
+        .error {
+            color: #dc3545;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 16px;
+            margin-bottom: 24px;
+            text-align: center;
+            border-radius: 8px;
+        }
+        .filter-form {
+            background-color: #fff;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+        }
+        .filter-form .form-group {
+            flex: 1;
+            margin-bottom: 16px;
+        }
+        .filter-form label {
+            display: block;
+            color: #4a5568;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .filter-form input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #cbd5e0;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .filter-form input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 4px rgba(59, 130, 246, 0.5);
+        }
+        .filter-form .button-group {
+            display: flex;
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .table-container {
+            background-color: #fff;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        th {
+            background-color: #edf2f7;
+            color: #333;
+            font-weight: bold;
+        }
+        tr:hover {
+            background-color: #eff6ff;
+        }
+        td:last-child {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .catalog-table-container {
+            background-color: #f7fafc;
+            padding: 16px;
+            border-radius: 4px;
+            margin: 8px 0;
+        }
+        .catalog-table th {
+            background-color: #e2e8f0;
+        }
+        .view-btn, .details-btn, .edit-btn, .delete-btn, .create-btn, .search-btn, .pagination-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .view-btn {
+            background-color: #9333ea;
+            color: white;
+        }
+        .view-btn:hover {
+            background-color: #7e22ce;
+        }
+        .details-btn {
+            background-color: #8b5cf6;
+            color: white;
+        }
+        .details-btn:hover {
+            background-color: #6d28d9;
+        }
+        .edit-btn {
+            background-color: #eab308;
+            color: white;
+        }
+        .edit-btn:hover {
+            background-color: #ca8a04;
+        }
+        .delete-btn {
+            background-color: #ef4444;
+            color: white;
+        }
+        .delete-btn:hover {
+            background-color: #dc2626;
+        }
+        .search-btn {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .search-btn:hover {
+            background-color: #2563eb;
+        }
+        .create-btn {
+            background-color: #10b981;
+            color: white;
+            padding: 10px 20px;
+        }
+        .create-btn:hover {
+            background-color: #059669;
+        }
+        .pagination-container {
+            margin-top: 24px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .pagination-btn {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .pagination-btn:hover:not(.disabled) {
+            background-color: #2563eb;
+        }
+        .pagination-btn.disabled {
+            background-color: #6b7280;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        .pagination-btn.active {
+            background-color: #2563eb;
+            font-weight: bold;
+        }
+        .ellipsis {
+            padding: 8px 12px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        .page-input {
+            width: 60px;
+            padding: 8px;
+            margin: 0 8px;
+            border: 1px solid #cbd5e0;
+            border-radius: 4px;
+            font-size: 14px;
+            text-align: center;
+        }
+        .page-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 4px rgba(59, 130, 246, 0.5);
+        }
+        .no-events {
+            color: #d97706;
+            background-color: #fef3c7;
+            border: 1px solid #fde68a;
+            padding: 16px;
+            margin-bottom: 24px;
+            text-align: center;
+            border-radius: 8px;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 16px;
+            }
+            .filter-form {
+                padding: 16px;
+            }
+            .filter-form .form-group {
+                margin-bottom: 12px;
+            }
+            table {
+                font-size: 14px;
+            }
+            th, td {
+                padding: 8px;
+            }
+            .view-btn, .details-btn, .edit-btn, .delete-btn, .search-btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+            .create-btn {
+                padding: 8px 16px;
+            }
+        }
+        @media (max-width: 640px) {
+            .filter-form .button-group {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+    </style>
 </head>
 <body>
-<div id="root" class="min-h-screen bg-gray-100"></div>
-<script type="text/babel" src="/js/event/events.js"></script>
+<div class="container">
+    <h1>События</h1>
+    <div th:if="${message}" th:text="${message}" class="message"></div>
+    <div th:if="${error}" th:text="${error}" class="error"></div>
+
+    <!-- Filter Form -->
+    <form th:action="@{/projects/catalogs/events}" method="get" class="filter-form">
+        <div class="form-group">
+            <label for="text">Название</label>
+            <input type="text" id="text" name="text" th:value="${text}" class="w-full"/>
+        </div>
+        <div class="form-group">
+            <label for="begin">Дата начала</label>
+            <input type="datetime-local" id="begin" name="begin" th:value="${begin != null} ? ${#temporals.format(begin, 'yyyy-MM-dd\'T\'HH:mm')} : ''" class="w-full"/>
+        </div>
+        <div class="form-group">
+            <label for="end">Дата окончания</label>
+            <input type="datetime-local" id="end" name="end" th:value="${end != null} ? ${#temporals.format(end, 'yyyy-MM-dd\'T\'HH:mm')} : ''" class="w-full"/>
+        </div>
+        <input type="hidden" name="page" value="0"/>
+        <input type="hidden" name="size" th:value="${pageSize}"/>
+        <div class="button-group">
+            <button type="submit" class="search-btn">Поиск событий</button>
+            <a th:href="@{/projects/catalogs/events/build}" class="create-btn">Создать событие</a>
+            <a th:href="@{/projects/catalogs}" class="create-btn">Назад к каталогам</a>
+        </div>
+    </form>
+
+    <!-- Events Table -->
+    <div class="table-container" th:unless="${#lists.isEmpty(events)}">
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Название</th>
+                <th>Локальная дата создания</th>
+                <th>Дата создания</th>
+                <th>Действия</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="event : ${events}">
+                <td th:text="${event.id}"></td>
+                <td th:text="${event.name} ?: 'N/A'"></td>
+                <td th:text="${event.localCreatedAt != null} ? ${#temporals.format(event.localCreatedAt, 'dd.MM.yyyy HH:mm')} : 'N/A'"></td>
+                <td th:text="${event.createdAt != null} ? ${#temporals.format(event.createdAt, 'dd.MM.yyyy HH:mm')} : 'N/A'"></td>
+                <td>
+                    <a th:href="@{/projects/catalogs/events(page=${currentPage}, size=${pageSize}, text=${text}, begin=${begin != null} ? ${#temporals.format(begin, 'yyyy-MM-dd\'T\'HH:mm')} : '', end=${end != null} ? ${#temporals.format(end, 'yyyy-MM-dd\'T\'HH:mm')} : '', showCatalogId=${showCatalogId == event.id} ? '' : ${event.id})}"
+                       th:class="${showCatalogId == event.id} ? 'view-btn' : 'details-btn'"
+                       th:text="${showCatalogId == event.id} ? 'Скрыть каталог' : 'Показать каталог'"></a>
+                    <a th:href="@{/projects/catalogs/events/edit/__${event.catalog.project.slug}__/__${event.catalog.slug}__/__${event.id}__}" class="edit-btn">Редактировать</a>
+                    <form th:action="@{/projects/catalogs/events/delete/__${event.catalog.project.slug}__/__${event.catalog.slug}__/__${event.id}__}" method="post" style="display: inline;">
+                        <button type="submit" class="delete-btn" onclick="return confirm('Вы уверены, что хотите удалить событие?')">Удалить</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <!-- Catalog Details -->
+        <div th:if="${showCatalogId != null}" class="catalog-table-container">
+            <table>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Название</th>
+                    <th>Описание</th>
+                    <th>Активен</th>
+                    <th>Версия</th>
+                    <th>Создано</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="event : ${events}" th:if="${event.id == showCatalogId}">
+                    <td th:text="${event.catalog.id}"></td>
+                    <td th:text="${event.catalog.name}"></td>
+                    <td th:text="${event.catalog.description} ?: 'N/A'"></td>
+                    <td th:text="${event.catalog.active} ? 'Да' : 'Нет'"></td>
+                    <td th:text="${event.catalog.version} ?: 'N/A'"></td>
+                    <td th:text="${event.catalog.createdAt != null} ? ${#temporals.format(event.catalog.createdAt, 'dd.MM.yyyy HH:mm')} : 'N/A'"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- No Events Message -->
+    <div th:if="${#lists.isEmpty(events)}" class="no-events">
+        События не найдены
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-container" th:if="${totalPages > 1}">
+        <a th:href="@{/projects/catalogs/events(page=${currentPage - 1}, size=${pageSize}, text=${text}, begin=${begin != null} ? ${#temporals.format(begin, 'yyyy-MM-dd\'T\'HH:mm')} : '', end=${end != null} ? ${#temporals.format(end, 'yyyy-MM-dd\'T\'HH:mm')} : '', showCatalogId=${showCatalogId})}"
+           th:class="${currentPage == 0} ? 'pagination-btn disabled' : 'pagination-btn'"
+           th:text="'« Предыдущая'"></a>
+        <a th:href="@{/projects/catalogs/events(page=0, size=${pageSize}, text=${text}, begin=${begin != null} ? ${#temporals.format(begin, 'yyyy-MM-dd\'T\'HH:mm')} : '', end=${end != null} ? ${#temporals.format(end, 'yyyy-MM-dd\'T\'HH:mm')} : '', showCatalogId=${showCatalogId})}"
+           th:class="${currentPage == 0} ? 'pagination-btn active' : 'pagination-btn'"
+           th:text="1"></a>
+        <span th:if="${currentPage > 3}" class="ellipsis">...</span>
+        <th:block th:each="i : ${#numbers.sequence(currentPage - 2, currentPage + 2)}"
+                  th:if="${i > 0 and i < totalPages - 1}">
+            <a th:href="@{/projects/catalogs/events(page=${i}, size=${pageSize}, text=${text}, begin=${begin != null} ? ${#temporals.format(begin, 'yyyy-MM-dd\'T\'HH:mm')} : '', end=${end != null} ? ${#temporals.format(end, 'yyyy-MM-dd\'T\'HH:mm')} : '', showCatalogId=${showCatalogId})}"
+               th:class="${i == currentPage} ? 'pagination-btn active' : 'pagination-btn'"
+               th:text="${i + 1}"></a>
+        </th:block>
+        <span th:if="${currentPage < totalPages - 3}" class="ellipsis">...</span>
+        <a th:href="@{/projects/catalogs/events(page=${totalPages - 1}, size=${pageSize}, text=${text}, begin=${begin != null} ? ${#temporals.format(begin, 'yyyy-MM-dd\'T\'HH:mm')} : '', end=${end != null} ? ${#temporals.format(end, 'yyyy-MM-dd\'T\'HH:mm')} : '', showCatalogId=${showCatalogId})}"
+           th:class="${currentPage == totalPages - 1} ? 'pagination-btn active' : 'pagination-btn'"
+           th:text="${totalPages}"
+           th:if="${totalPages > 1}"></a>
+        <a th:href="@{/projects/catalogs/events(page=${currentPage + 1}, size=${pageSize}, text=${text}, begin=${begin != null} ? ${#temporals.format(begin, 'yyyy-MM-dd\'T\'HH:mm')} : '', end=${end != null} ? ${#temporals.format(end, 'yyyy-MM-dd\'T\'HH:mm')} : '', showCatalogId=${showCatalogId})}"
+           th:class="${currentPage == totalPages - 1} ? 'pagination-btn disabled' : 'pagination-btn'"
+           th:text="'Следующая »'"></a>
+        <label for="pageInput">Перейти: </label>
+        <input type="number" id="pageInput" th:value="${currentPage + 1}" min="1"
+               th:max="${totalPages}"
+               onchange="navigateToPage(this.value, ${pageSize}, ${totalPages}, `${text}`, `${begin != null} ? ${#temporals.format(begin, 'yyyy-MM-dd\'T\'HH:mm')} : ''`, `${end != null} ? ${#temporals.format(end, 'yyyy-MM-dd\'T\'HH:mm')} : ''`, `${showCatalogId}`)"
+               class="page-input">
+    </div>
+</div>
+
+<script>
+    function navigateToPage(pageInput, pageSize, totalPages, text, begin, end, showCatalogId) {
+        if (!pageSize || !totalPages) {
+            console.error('pageSize or totalPages is undefined');
+            return;
+        }
+        let page = parseInt(pageInput, 10);
+        if (isNaN(page) || page < 1) {
+            page = 1;
+        } else if (page > totalPages) {
+            page = totalPages;
+        }
+        let url = '/projects/catalogs/events?page=' + (page - 1) + '&size=' + pageSize;
+        if (text) url += '&text=' + encodeURIComponent(text);
+        if (begin) url += '&begin=' + encodeURIComponent(begin);
+        if (end) url += '&end=' + encodeURIComponent(end);
+        if (showCatalogId) url += '&showCatalogId=' + showCatalogId;
+        window.location.href = url;
+    }
+</script>
 </body>
 </html>

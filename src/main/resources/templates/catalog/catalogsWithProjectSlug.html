@@ -33,7 +33,7 @@
             <td class="p-3" th:text="${catalog.active} ? 'Да' : 'Нет'">Да</td>
             <td class="p-3" th:text="${catalog.version} ?: '—'">1.0</td>
             <td class="p-3" th:text="${catalog.slug} ?: '—'">slug</td>
-            <td class="p-3" th:text="${#dates.format(catalog.createdAt, 'dd.MM.yyyy HH:mm')}">01.01.2023 12:00</td>
+            <td class="p-3" th:text="${#temporals.format(catalog.createdAt, 'dd.MM.yyyy HH:mm')}">01.01.2023 12:00</td>
             <td class="p-3" th:text="${catalog.project?.name} ?: '—'">Проект</td>
             <td class="p-3">
                 <a th:href="@{/projects/catalogs/events/{slug}(slug=${catalog.slug})}" class="text-blue-500 hover:underline">

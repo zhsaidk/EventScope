@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Value;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 @Value
 public class BuildEventDto {
@@ -15,5 +16,5 @@ public class BuildEventDto {
     JsonNode parameters;
 
     @NotNull(message = "Field localCreatedAt must be not null")
-    Timestamp localCreatedAt;
+    LocalDateTime localCreatedAt;
 }

@@ -36,7 +36,7 @@ public class ProjectRestController {
     @GetMapping("/projects")
     public ResponseEntity<PagedModel<Project>> getAllProject(@RequestParam(value = "page", defaultValue = "0") Integer page,
                                                              @RequestParam(value = "size", defaultValue = "10") Integer size) {
-        return projectService.getAll(PageRequest.of(page, size, Sort.by("createdAt")));
+        return ResponseEntity.ok(projectService.getAll(PageRequest.of(page, size, Sort.by("createdAt"))));
     }
 
     @GetMapping("/{projectSlug}")
@@ -76,7 +76,7 @@ public class ProjectRestController {
     @GetMapping("/projects/catalogs")
     public ResponseEntity<PagedModel<Catalog>> getAllCatalogs(@RequestParam(value = "page", defaultValue = "0") Integer page,
                                                               @RequestParam(value = "szie", defaultValue = "10") Integer size) {
-        return catalogService.findAll(PageRequest.of(page, size, Sort.by("createdAt")));
+        return ResponseEntity.ok(catalogService.findAll(PageRequest.of(page, size, Sort.by("createdAt"))));
     }
 
     @GetMapping("/{projectSlug}/{catalogSlug}")

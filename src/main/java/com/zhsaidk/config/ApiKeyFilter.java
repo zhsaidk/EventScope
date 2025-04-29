@@ -20,7 +20,7 @@ public class ApiKeyFilter implements Filter {
     private final static String API_KEY_HEADER = "X-API-KEY";
     private final ApiKeyRepository apiKeyRepository;
     private static final String[] EXCLUDE_PATHS = {
-            "/user", "/login", "/rest"
+            "/user", "/login", "/rest", "/project"
     };
 
     private boolean isExcluded(String path) {

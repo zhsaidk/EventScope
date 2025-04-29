@@ -9,6 +9,7 @@ import com.zhsaidk.dto.BuildReadCatalogDto;
 import com.zhsaidk.util.SlugUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
@@ -25,8 +26,12 @@ public class CatalogService {
     private final CatalogRepository catalogRepository;
     private final ProjectRepository projectRepository;
 
-    public ResponseEntity<PagedModel<Catalog>> findAll(PageRequest pageRequest) {
-        return ResponseEntity.ok(new PagedModel<>(catalogRepository.findAll(pageRequest)));
+    public PagedModel<Catalog> findAll(PageRequest pageRequest) {
+        return new PagedModel<>(catalogRepository.findAll(pageRequest));
+    }
+
+    public Page<Catalog> findAllCatalogs(PageRequest pageRequest){
+        return catalogRepository.findAll(pageRequest);
     }
 
     public ResponseEntity<?> findById(String projectSlug, String catalogSlug) {
