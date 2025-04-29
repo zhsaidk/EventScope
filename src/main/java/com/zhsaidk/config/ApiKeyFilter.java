@@ -19,12 +19,30 @@ import java.util.Optional;
 public class ApiKeyFilter implements Filter {
     private final static String API_KEY_HEADER = "X-API-KEY";
     private final ApiKeyRepository apiKeyRepository;
+    private static final String[] EXCLUDE_PATHS = {
+            "/user", "/login", "/rest"
+    };
+
+    private boolean isExcluded(String path) {
+        for (String exclude : EXCLUDE_PATHS) {
+            if (path.startsWith(exclude)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
             throws IOException, ServletException {
         HttpServletRequest request = (HttpServletRequest) servletRequest;
         HttpServletResponse response = (HttpServletResponse) servletResponse;
+        String path = request.getRequestURI();
+
+        if (isExcluded(path)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         String apiKey = request.getHeader(API_KEY_HEADER);
         boolean flag = false;

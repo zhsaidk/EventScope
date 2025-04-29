@@ -59,4 +59,9 @@ public class ProjectController {
         model.addAttribute("events", eventService.findAllEventsByCatalogSlug(catalogSlug));
         return "event/eventsWithCatalogSlug";
     }
+
+    @GetMapping("/login")
+    public String loginPage(){
+        return "user/login";
+    }
 }
