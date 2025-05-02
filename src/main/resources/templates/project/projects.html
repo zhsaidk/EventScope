@@ -86,7 +86,26 @@
         .create-catalog-button:hover {
             background-color: #138496;
         }
-        .create-event-button {
+        .catalogs-button {
+            padding: 10px 20px;
+            background-color: #17a2b8;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            margin-left: 10px;
+        }
+        .catalogs-button:hover {
+            background-color: #138496;
+            transform: scale(1.05);
+        }
+        .catalogs-button:active {
+            transform: scale(0.95);
+        }
+        .events-button {
             padding: 10px 20px;
             background-color: #ffc107;
             color: black;
@@ -98,11 +117,11 @@
             transition: background-color 0.3s ease, transform 0.1s ease;
             margin-left: 10px;
         }
-        .create-event-button:hover {
+        .events-button:hover {
             background-color: #e0a800;
             transform: scale(1.05);
         }
-        .create-event-button:active {
+        .events-button:active {
             transform: scale(0.95);
         }
         .pagination-container {
@@ -254,7 +273,8 @@
 
     <div class="create-container">
         <a th:href="@{/projects/build}" class="create-button">Создать проект</a>
-        <a th:href="@{/projects/catalogs/events/build}" class="create-event-button">Создать событие</a>
+        <a th:href="@{/projects/catalogs}" class="catalogs-button">Каталоги</a>
+        <a th:href="@{/projects/catalogs/events}" class="events-button">События</a>
     </div>
 </div>
 

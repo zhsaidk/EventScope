@@ -65,7 +65,7 @@
             color: #6c757d;
             padding: 20px;
         }
-        .view-btn, .details-btn, .delete-btn, .back-btn, .create-btn, .pagination-btn {
+        .view-btn, .create-event-btn, .delete-btn, .back-btn, .create-btn, .pagination-btn {
             padding: 8px 16px;
             border: none;
             border-radius: 4px;
@@ -83,11 +83,11 @@
         .view-btn:hover {
             background-color: #0056b3;
         }
-        .details-btn {
+        .create-event-btn {
             background-color: #28a745;
             color: white;
         }
-        .details-btn:hover {
+        .create-event-btn:hover {
             background-color: #218838;
         }
         .delete-btn {
@@ -163,6 +163,12 @@
             border-color: #007bff;
             box-shadow: 0 0 4px rgba(0, 123, 255, 0.3);
         }
+        .text-blue-500 {
+            color: #3b82f6;
+        }
+        .hover\:underline:hover {
+            text-decoration: underline;
+        }
         @media (max-width: 768px) {
             table {
                 font-size: 14px;
@@ -170,7 +176,7 @@
             th, td {
                 padding: 8px;
             }
-            .view-btn, .details-btn, .delete-btn {
+            .view-btn, .create-event-btn, .delete-btn {
                 padding: 6px 12px;
                 font-size: 12px;
             }
@@ -197,15 +203,19 @@
             <tbody>
             <tr th:each="catalog : ${catalogs}">
                 <th th:text="${catalog.id}"></th>
-                <td th:text="${catalog.name}"></td>
+                <td>
+                    <a th:href="@{/projects/catalogs/events/__${catalog.slug}__}"
+                       th:text="${catalog.name}"
+                       class="text-blue-500 hover:underline"></a>
+                </td>
                 <td th:text="${catalog.description} ?: 'N/A'"></td>
                 <td th:text="${catalog.active} ? 'Да' : 'Нет'"></td>
                 <td th:text="${catalog.version} ?: 'N/A'"></td>
                 <td th:text="${catalog.createdAt != null} ? ${#temporals.format(catalog.createdAt, 'dd.MM.yyyy HH:mm')} : 'N/A'"></td>
                 <td>
                     <a th:href="@{/projects/__${catalog.project.slug}__}" class="view-btn">Просмотр проекта</a>
-                    <a th:href="@{/projects/catalogs/__${catalog.slug}__(projectSlug=${catalog.project.slug})}" class="details-btn">Детали</a>
-                    <form th:action="@{/projects/catalogs/delete/__${catalog.project.slug}__/__${catalog.slug}__}" method="post" style="display: inline;">
+                    <a th:href="@{/projects/catalogs/events/build(projectSlug=${catalog.project.slug}, catalogSlug=${catalog.slug})}" class="create-event-btn">Создать событие</a>
+                    <form th:action="@{/projects/catalogs/__${catalog.slug}__}" method="post" style="display: inline;">
                         <button type="submit" class="delete-btn" onclick="return confirm('Вы уверены, что хотите удалить каталог?')">Удалить</button>
                     </form>
                 </td>
@@ -245,11 +255,6 @@
                th:max="${totalPages}"
                onchange="navigateToPage(this.value, ${pageSize}, ${totalPages})"
                class="page-input">
-    </div>
-
-    <div class="create-container">
-        <a th:href="@{/projects}" class="back-btn">Назад</a>
-        <a th:href="@{/projects/catalogs/build}" class="create-btn">Создать каталог</a>
     </div>
 </div>
 

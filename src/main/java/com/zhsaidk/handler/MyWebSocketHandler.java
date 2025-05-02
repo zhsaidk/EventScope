@@ -19,7 +19,7 @@ import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
-public class MyWebSocketHandler extends TextWebSocketHandler {
+public class    MyWebSocketHandler extends TextWebSocketHandler {
     private final ObjectMapper objectMapper;
     private final EventService eventService;
     private final ProjectService projectService;

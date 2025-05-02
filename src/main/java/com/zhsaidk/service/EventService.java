@@ -1,5 +1,7 @@
 package com.zhsaidk.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zhsaidk.database.entity.Catalog;
 import com.zhsaidk.database.entity.Event;
 import com.zhsaidk.database.repo.CatalogRepository;
@@ -8,6 +10,7 @@ import com.zhsaidk.database.repo.EventSpecification;
 import com.zhsaidk.database.repo.ProjectRepository;
 import com.zhsaidk.dto.BuildCreateEventDto;
 import com.zhsaidk.dto.BuildEventDto;
+import com.zhsaidk.dto.BuildEventWebDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -27,6 +30,7 @@ public class EventService {
     private final EventRepository eventRepository;
     private final CatalogRepository catalogRepository;
     private final ProjectRepository projectRepository;
+    private final ObjectMapper objectMapper;
 
     public ResponseEntity<?> build(BuildEventDto dto, String projectSlug, String catalogSlug) {
         if (!catalogRepository.existsBySlugAndProjectSlug(catalogSlug, projectSlug)) {
@@ -87,5 +91,29 @@ public class EventService {
 
     public Page<Event> findAllEvents(PageRequest pageRequest, String text, LocalDateTime begin, LocalDateTime end){
         return eventRepository.findAll(EventSpecification.byCriteria(text, begin, end), pageRequest);
+    }
+
+    public void createEvent(BuildEventWebDto dto, String projectSlug, String catalogSlug) {
+        if (!catalogRepository.existsBySlugAndProjectSlug(catalogSlug, projectSlug)) {
+            throw new IllegalArgumentException("Каталог не относится к проекту");
+        }
+
+        Catalog catalog = catalogRepository.findCatalogBySlug(catalogSlug)
+                .orElse(null); // теперь это безопаснее, потому что уже проверили
+        JsonNode parameters;
+        try {
+            parameters = objectMapper.readTree(dto.getParameters());
+            System.out.println("Parsed parameters: " + parameters);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid JSON in parameters: " + e.getMessage());
+        }
+
+        eventRepository.save(Event.builder()
+
+                .name(dto.getName())
+                .parameters(parameters)
+                .catalog(catalog)
+                .localCreatedAt(dto.getLocalCreatedAt())
+                .build());
     }
 }

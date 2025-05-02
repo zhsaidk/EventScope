@@ -4,35 +4,170 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Event</title>
-    <link rel="stylesheet" href="/css/event/build.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1, h2 {
+            color: #333;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"],
+        input[type="datetime-local"],
+        textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+            margin-right: 8px;
+        }
+        .update-button {
+            background-color: #17a2b8;
+            color: white;
+        }
+        .update-button:hover {
+            background-color: #138496;
+        }
+        .error {
+            color: #dc3545;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .error-list {
+            color: #dc3545;
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+    </style>
 </head>
 <body>
 <div class="container">
     <h1>Create Event</h1>
-    <div class="form-group">
-        <label for="projectSlug">Project Slug: <span class="required">*</span></label>
-        <input type="text" id="projectSlug" required>
-    </div>
-    <div class="form-group">
-        <label for="catalogSlug">Catalog Slug: <span class="required">*</span></label>
-        <input type="text" id="catalogSlug" required>
-    </div>
-    <div class="form-group">
-        <label for="name">Name: <span class="required">*</span></label>
-        <input type="text" id="name" required>
-    </div>
-    <div class="form-group">
-        <label for="parameters">Parameters (JSON): <span class="required">*</span></label>
-        <textarea id="parameters" required></textarea>
-    </div>
-    <div class="form-group">
-        <label for="localCreatedAt">Created At: <span class="required">*</span></label>
-        <input type="datetime-local" id="localCreatedAt" required>
-    </div>
-    <div class="button-group">
-        <button type="button" onclick="submitEventForm()" class="update-button">Create</button>
-    </div>
+    <div id="errorContainer" class="error-list" style="display: none;"></div>
+    <form id="eventForm" method="POST">
+        <div class="form-group">
+            <label for="projectSlug">Project Slug: <span class="required">*</span></label>
+            <input type="text" id="projectSlug" name="projectSlug" required>
+        </div>
+        <div class="form-group">
+            <label for="catalogSlug">Catalog Slug: <span class="required">*</span></label>
+            <input type="text" id="catalogSlug" name="catalogSlug" required>
+        </div>
+        <div class="form-group">
+            <label for="name">Name: <span class="required">*</span></label>
+            <input type="text" id="name" name="name" required>
+        </div>
+        <div class="form-group">
+            <label for="parameters">Parameters (JSON): <span class="required">*</span></label>
+            <textarea id="parameters" name="parameters" required></textarea>
+        </div>
+        <div class="form-group">
+            <label for="localCreatedAt">Created At: <span class="required">*</span></label>
+            <input type="datetime-local" id="localCreatedAt" name="localCreatedAt" required>
+        </div>
+        <div class="button-group">
+            <button type="submit" class="update-button">Create</button>
+        </div>
+    </form>
 </div>
-<script src="/js/event/build.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const localCreatedAtInput = document.getElementById("localCreatedAt");
+        const now = new Date();
+        localCreatedAtInput.value = now.toISOString().slice(0, 16); // yyyy-MM-ddTHH:mm
+
+        const form = document.getElementById("eventForm");
+        const errorContainer = document.getElementById("errorContainer");
+
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const projectSlug = document.getElementById("projectSlug").value.trim();
+            const catalogSlug = document.getElementById("catalogSlug").value.trim();
+            const parametersInput = document.getElementById("parameters").value.trim();
+            const localCreatedAtRaw = document.getElementById("localCreatedAt").value;
+
+            // Validate required fields
+            if (!projectSlug || !catalogSlug || !parametersInput || !localCreatedAtRaw) {
+                errorContainer.textContent = "All fields are required.";
+                errorContainer.style.display = "block";
+                return;
+            }
+
+            // Validate JSON parameters
+            try {
+                JSON.parse(parametersInput);
+            } catch (e) {
+                errorContainer.textContent = "Parameters must be valid JSON.";
+                errorContainer.style.display = "block";
+                return;
+            }
+
+            // Format localCreatedAt to include seconds
+            const localCreatedAt = localCreatedAtRaw + ":00";
+
+            // Create FormData
+            const formData = new FormData(form);
+            formData.set("localCreatedAt", localCreatedAt); // Update with formatted value
+
+            try {
+                const response = await fetch(`/projects/${projectSlug}/catalogs/${catalogSlug}/events`, {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (response.redirected && response.url.includes("/projects/catalogs/events/build")) {
+                    // Simulate fetching flash attributes (in reality, these would be server-rendered or passed differently)
+                    errorContainer.textContent = "Validation failed. Please check your inputs.";
+                    errorContainer.style.display = "block";
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error(`Failed to create event: ${response.status}`);
+                }
+
+                alert("Event created successfully");
+                form.reset();
+                localCreatedAtInput.value = new Date().toISOString().slice(0, 16);
+                window.location.href = "/projects/catalogs/events";
+            } catch (error) {
+                console.error("Error creating event:", error);
+                errorContainer.textContent = "Failed to create event.";
+                errorContainer.style.display = "block";
+            }
+        });
+    });
+</script>
 </body>
 </html>

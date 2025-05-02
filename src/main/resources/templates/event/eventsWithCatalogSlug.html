@@ -19,6 +19,7 @@
             <th class="p-3 text-left">Параметры (JSON)</th>
             <th class="p-3 text-left">Локальное создание</th>
             <th class="p-3 text-left">Создан</th>
+            <th class="p-3 text-left">Действия</th>
         </tr>
         </thead>
         <tbody>
@@ -30,16 +31,23 @@
             <td class="p-3" th:text="${event.parameters} ?: '—'">JSON</td>
             <td class="p-3" th:text="${event.localCreatedAt} ? ${#temporals.format(event.localCreatedAt, 'dd.MM.yyyy HH:mm')} : '—'">01.01.2023 12:00</td>
             <td class="p-3" th:text="${#temporals.format(event.createdAt, 'dd.MM.yyyy HH:mm')}">01.01.2023 12:00</td>
+            <td class="p-3">
+                <form th:action="@{/projects/catalogs/events}" method="post" class="inline">
+                    <input type="hidden" name="eventId" th:value="${event.id}">
+                    <button type="submit" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm"
+                            onclick="return confirm('Вы уверены, что хотите удалить событие?')">Удалить</button>
+                </form>
+            </td>
         </tr>
         <!-- Если список пуст -->
         <tr th:if="${#lists.isEmpty(events)}">
-            <td colspan="6" class="p-3 text-center text-gray-500">События не найдены</td>
+            <td colspan="7" class="p-3 text-center text-gray-500">События не найдены</td>
         </tr>
         </tbody>
     </table>
 
     <!-- Ссылка для возврата к каталогам -->
-    <a th:href="@{/projects/catalogs/{slug}(slug=${catalogSlug})}" class="mt-6 inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+    <a th:href="@{/projects/catalogs}" class="mt-6 inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
         Назад к каталогам
     </a>
 </div>

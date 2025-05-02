@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -49,10 +50,16 @@ public class ApiKeyFilter implements Filter {
 
         if (apiKey != null) {
             ApiKey key = apiKeyRepository.findByKeyHashAndIsActiveTrue(apiKey).orElse(null);
-            if (key != null && Objects.equals(apiKey, key.getKey_hash())) {
-                flag = true;
+            if (key != null) {
+                if (key.getExpiresAt() != null && key.getExpiresAt().isBefore(LocalDateTime.now())) {
+                    key.set_active(false);
+                    apiKeyRepository.save(key);
+                } else if (Objects.equals(apiKey, key.getKey_hash())) {
+                    flag = true;
+                }
             }
         }
+
 
         if (flag) {
             System.out.println("API Key valid, proceeding");

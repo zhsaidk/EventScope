@@ -1,30 +1,137 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Details</title>
-    <link rel="stylesheet" href="/css/projects/project.css">
+    <title>Детали проекта</title>
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input[type="text"],
+        .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .form-group textarea {
+            height: 100px;
+            resize: vertical;
+        }
+
+        .form-group input[type="checkbox"] {
+            margin-top: 10px;
+        }
+
+        .button-group {
+            text-align: center;
+        }
+
+        .update-button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+        }
+
+        .update-button:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+
+        .update-button:active {
+            transform: scale(0.95);
+        }
+
+        .error {
+            color: #dc3545;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+    </style>
 </head>
 <body>
 <div class="container">
-    <h1>Project Details</h1>
-    <div class="form-group">
-        <label for="name">Name:</label>
-        <input type="text" id="name">
-    </div>
-    <div class="form-group">
-        <label for="description">Description:</label>
-        <textarea id="description"></textarea>
-    </div>
-    <div class="form-group">
-        <label for="active">Active:</label>
-        <input type="checkbox" id="active">
-    </div>
-    <div class="button-group">
-        <button onclick="updateProject()" class="update-button">Update</button>
-    </div>
+    <h1>Детали проекта</h1>
+    <div id="error" class="error" style="display: none;"></div>
+    <form id="projectForm" th:action="@{/projects/{projectSlug}(projectSlug=${project.slug})}" method="POST">
+        <input type="hidden" name="_csrf" th:if="${_csrf}" th:value="${_csrf.token}"/>
+        <input type="hidden" name="_method" value="PUT"/>
+        <div class="form-group">
+            <label for="name">Название:</label>
+            <input type="text" id="name" name="name" th:value="${project.name}" required>
+        </div>
+        <div class="form-group">
+            <label for="description">Описание:</label>
+            <textarea id="description" name="description" th:text="${project.description}"></textarea>
+        </div>
+        <div class="form-group">
+            <label for="active">Активен:</label>
+            <input type="checkbox" id="active" name="active" th:checked="${project.active}">
+        </div>
+        <div class="button-group">
+            <button type="submit" class="update-button">Обновить</button>
+        </div>
+    </form>
 </div>
-<script src="/js/projects/project.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const form = document.getElementById("projectForm");
+        const errorDiv = document.getElementById("error");
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(form);
+            // Убедимся, что active отправляется как true/false
+            formData.set("active", form.querySelector("#active").checked);
+
+            try {
+                const response = await fetch(form.action, {
+                    method: "POST", // Используем POST с _method=PUT
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || `Не удалось обновить проект: ${response.status}`);
+                }
+
+                alert("Проект успешно обновлён");
+                window.location.href = "/projects";
+            } catch (error) {
+                console.error("Ошибка обновления проекта:", error);
+                errorDiv.textContent = error.message;
+                errorDiv.style.display = "block";
+            }
+        });
+    });
+</script>
 </body>
 </html>
