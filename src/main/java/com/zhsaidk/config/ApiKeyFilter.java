@@ -18,12 +18,12 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Optional;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
 @RequiredArgsConstructor
-public class ApiKeyFilter implements Filter {
+public class ApiKeyFilter extends OncePerRequestFilter {
     private static final String API_KEY_HEADER = "X-API-KEY";
-    private final AuthenticationManager authenticationManager;
     private final ApiKeyRepository apiKeyRepository;
     private static final String[] EXCLUDE_PATHS = {
             "/user", "/login", "/rest", "/project"
@@ -39,26 +39,24 @@ public class ApiKeyFilter implements Filter {
     }
 
     @Override
-    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
-            throws IOException, ServletException {
-        HttpServletRequest request = (HttpServletRequest) servletRequest;
-        HttpServletResponse response = (HttpServletResponse) servletResponse;
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain)
+            throws ServletException, IOException {
+
         String path = request.getRequestURI();
 
-        // Пропускаем исключённые пути
         if (isExcluded(path)) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // Получаем API-ключ из заголовка
         String apiKey = request.getHeader(API_KEY_HEADER);
         if (apiKey == null) {
             sendError(response, "Missing API Key");
             return;
         }
 
-        // Ищем API-ключ в базе
         Optional<ApiKey> keyOptional = apiKeyRepository.findByKeyHashAndIsActiveTrue(apiKey);
         if (!keyOptional.isPresent()) {
             sendError(response, "Invalid API Key");
@@ -67,7 +65,6 @@ public class ApiKeyFilter implements Filter {
 
         ApiKey key = keyOptional.get();
 
-        // Проверяем срок действия ключа
         if (key.getExpiresAt() != null && key.getExpiresAt().isBefore(LocalDateTime.now())) {
             key.set_active(false);
             apiKeyRepository.save(key);
@@ -75,7 +72,6 @@ public class ApiKeyFilter implements Filter {
             return;
         }
 
-        // Получаем пользователя и его роль
         User user = key.getUser();
         if (user == null) {
             sendError(response, "No user associated with API Key");
@@ -83,18 +79,15 @@ public class ApiKeyFilter implements Filter {
         }
 
         String role = user.getRole().name();
-        SimpleGrantedAuthority authority = new SimpleGrantedAuthority(role);
-        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+        var authority = new SimpleGrantedAuthority(role);
+        var authentication = new UsernamePasswordAuthenticationToken(
                 user.getUsername(),
                 null,
                 Collections.singletonList(authority)
         );
         authentication.setDetails(user);
-
-        // Устанавливаем контекст безопасности
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        System.out.println("Setting authentication for user: " + user.getUsername() + " with role: " + role);
-        System.out.println(SecurityContextHolder.getContext().getAuthentication().isAuthenticated());
+        System.out.println("Authenticated " + user.getUsername() + " as " + role);
 
         filterChain.doFilter(request, response);
     }
