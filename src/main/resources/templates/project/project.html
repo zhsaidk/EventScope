@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -95,7 +95,7 @@
             <label for="active">Активен:</label>
             <input type="checkbox" id="active" name="active" th:checked="${project.active}">
         </div>
-        <div class="button-group">
+        <div class="button-group" sec:authorize="hasRole('ADMIN')">
             <button type="submit" class="update-button">Обновить</button>
         </div>
     </form>

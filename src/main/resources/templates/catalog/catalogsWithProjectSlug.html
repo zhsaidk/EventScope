@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <title>Каталоги проекта</title>
@@ -44,7 +44,8 @@
                     <a th:href="@{/projects/catalogs/events/{slug}(slug=${catalog.slug})}" class="text-blue-500 hover:underline">
                         Просмотреть события
                     </a>
-                    <form th:action="@{/projects/catalogs/{slug}(slug=${catalog.slug})}" method="post" class="inline">
+                    <form th:action="@{/projects/catalogs/{slug}(slug=${catalog.slug})}" method="post" class="inline"
+                          sec:authorize="hasRole('ADMIN')">
                         <button type="submit" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm"
                                 onclick="return confirm('Вы уверены, что хотите удалить каталог?')">Удалить</button>
                     </form>

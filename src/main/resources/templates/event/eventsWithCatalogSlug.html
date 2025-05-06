@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <title>События каталога</title>
@@ -19,7 +19,7 @@
             <th class="p-3 text-left">Параметры (JSON)</th>
             <th class="p-3 text-left">Локальное создание</th>
             <th class="p-3 text-left">Создан</th>
-            <th class="p-3 text-left">Действия</th>
+            <th class="p-3 text-left" sec:authorize="hasRole('ADMIN')">Действия</th>
         </tr>
         </thead>
         <tbody>
@@ -31,7 +31,7 @@
             <td class="p-3" th:text="${event.parameters} ?: '—'">JSON</td>
             <td class="p-3" th:text="${event.localCreatedAt} ? ${#temporals.format(event.localCreatedAt, 'dd.MM.yyyy HH:mm')} : '—'">01.01.2023 12:00</td>
             <td class="p-3" th:text="${#temporals.format(event.createdAt, 'dd.MM.yyyy HH:mm')}">01.01.2023 12:00</td>
-            <td class="p-3">
+            <td class="p-3" sec:authorize="hasRole('ADMIN')">
                 <form th:action="@{/projects/catalogs/events}" method="post" class="inline">
                     <input type="hidden" name="eventId" th:value="${event.id}">
                     <button type="submit" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm"
@@ -41,7 +41,7 @@
         </tr>
         <!-- Если список пуст -->
         <tr th:if="${#lists.isEmpty(events)}">
-            <td colspan="7" class="p-3 text-center text-gray-500">События не найдены</td>
+            <td th:colspan="${#authentication.getAuthorities().contains(new org.springframework.security.core.authority.SimpleGrantedAuthority('ROLE_ADMIN'))} ? 7 : 6" class="p-3 text-center text-gray-500">События не найдены</td>
         </tr>
         </tbody>
     </table>

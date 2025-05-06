@@ -24,7 +24,7 @@ repositories {
 }
 
 dependencies {
-	// https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind
+	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6:3.1.3.RELEASE'
 	implementation 'com.fasterxml.jackson.core:jackson-databind:2.19.0'
 	implementation 'org.thymeleaf.extras:thymeleaf-extras-java8time:3.0.4.RELEASE'
 	implementation 'org.springframework.boot:spring-boot-starter-security'

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -38,7 +38,7 @@
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.1s ease;
+            transition: background-color 0. slapping ease, transform 0.1s ease;
         }
         .create-button:hover {
             background-color: #218838;
@@ -86,26 +86,7 @@
         .create-catalog-button:hover {
             background-color: #138496;
         }
-        .catalogs-button {
-            padding: 10px 20px;
-            background-color: #17a2b8;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.1s ease;
-            margin-left: 10px;
-        }
-        .catalogs-button:hover {
-            background-color: #138496;
-            transform: scale(1.05);
-        }
-        .catalogs-button:active {
-            transform: scale(0.95);
-        }
-        .events-button {
+        .create-event-button {
             padding: 10px 20px;
             background-color: #ffc107;
             color: black;
@@ -117,11 +98,11 @@
             transition: background-color 0.3s ease, transform 0.1s ease;
             margin-left: 10px;
         }
-        .events-button:hover {
+        .create-event-button:hover {
             background-color: #e0a800;
             transform: scale(1.05);
         }
-        .events-button:active {
+        .create-event-button:active {
             transform: scale(0.95);
         }
         .pagination-container {
@@ -195,8 +176,8 @@
             <th>Описание</th>
             <th>Активен</th>
             <th>Создано</th>
-            <th>Действия с проектом</th>
-            <th>Действия с каталогом</th>
+            <th sec:authorize="hasAuthority('ADMIN')">Действия с проектом</th>
+            <th sec:authorize="hasAuthority('ADMIN')">Действия с каталогом</th>
         </tr>
         </thead>
         <tbody>
@@ -210,20 +191,20 @@
             <td th:text="${project.description} ?: ''"></td>
             <td th:text="${project.active} ? 'Да' : 'Нет'"></td>
             <td th:text="${#temporals.format(project.createdAt, 'dd.MM.yyyy HH:mm')}"></td>
-            <td>
+            <td sec:authorize="hasAuthority('ADMIN')">
                 <a th:href="@{/projects/__${project.slug}__}" class="view-button">Просмотр</a>
                 <form th:action="@{/projects/delete/__${project.slug}__}" method="post" style="display: inline;">
                     <button type="submit" class="delete-button"
                             onclick="return confirm('Вы уверены, что хотите удалить проект?')">Удалить</button>
                 </form>
             </td>
-            <td>
+            <td sec:authorize="hasAuthority('ADMIN')">
                 <a th:href="@{/projects/catalogs/build(projectSlug=${project.slug})}"
                    class="create-catalog-button">Создать каталог</a>
             </td>
         </tr>
         <tr th:if="${#lists.isEmpty(projects)}">
-            <td colspan="7">Проекты отсутствуют</td>
+            <td colspan="5" th:attrappend="colspan=${#security.hasAuthority('ADMIN') ? 7 : 5}">Проекты отсутствуют</td>
         </tr>
         </tbody>
     </table>
@@ -271,10 +252,9 @@
                onchange="navigateToPage(this.value, ${pageSize}, ${totalPages})">
     </div>
 
-    <div class="create-container">
+    <div class="create-container" sec:authorize="hasAuthority('ADMIN')">
         <a th:href="@{/projects/build}" class="create-button">Создать проект</a>
-        <a th:href="@{/projects/catalogs}" class="catalogs-button">Каталоги</a>
-        <a th:href="@{/projects/catalogs/events}" class="events-button">События</a>
+        <a th:href="@{/projects/catalogs/events/build}" class="create-event-button">Создать событие</a>
     </div>
 </div>
 

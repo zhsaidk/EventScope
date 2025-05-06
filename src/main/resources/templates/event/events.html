@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -164,6 +164,8 @@
         .ellipsis {
             padding: 8px 12px;
             color: #6b7280;
+            ellia
+
             font-size: 14px;
         }
         .page-input {
@@ -188,6 +190,13 @@
             margin-bottom: 24px;
             text-align: center;
             border-radius: 8px;
+        }
+        .debug-roles {
+            margin: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
         }
         @media (max-width: 768px) {
             .container {
@@ -244,8 +253,10 @@
         <input type="hidden" name="page" value="0"/>
         <input type="hidden" name="size" th:value="${pageSize}"/>
         <div class="button-group">
-            <button type="submit" class="search-btn">Поиск событий</button>
-            <a th:href="@{/projects/catalogs/events/build}" class="create-btn">Создать событие</a>
+            <button type="submit" class="search  search-btn">Поиск событий</button>
+            <div sec:authorize="hasAuthority('ADMIN')">
+                <a th:href="@{/projects/catalogs/events/build}" class="create-btn">Создать событие</a>
+            </div>
             <a th:href="@{/projects/catalogs}" class="create-btn">Назад к каталогам</a>
         </div>
     </form>
@@ -269,10 +280,12 @@
                 <td th:text="${event.localCreatedAt != null} ? ${#temporals.format(event.localCreatedAt, 'dd.MM.yyyy HH:mm')} : 'N/A'"></td>
                 <td th:text="${event.createdAt != null} ? ${#temporals.format(event.createdAt, 'dd.MM.yyyy HH:mm')} : 'N/A'"></td>
                 <td>
-                    <form th:action="@{/projects/catalogs/events}" method="post" style="display: inline;">
-                        <input type="hidden" name="EventId" th:value="${event.id}"/>
-                        <button type="submit" class="delete-btn" onclick="return confirm('Вы уверены, что хотите удалить событие?')">Удалить</button>
-                    </form>
+                    <div sec:authorize="hasAuthority('ADMIN')">
+                        <form th:action="@{/projects/catalogs/events}" method="post" style="display: inline;">
+                            <input type="hidden" name="EventId" th:value="${event.id}"/>
+                            <button type="submit" class="delete-btn" onclick="return confirm('Вы уверены, что хотите удалить событие?')">Удалить</button>
+                        </form>
+                    </div>
                 </td>
             </tr>
             </tbody>

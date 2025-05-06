@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -169,6 +169,13 @@
         .hover\:underline:hover {
             text-decoration: underline;
         }
+        .debug-roles {
+            margin: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
         @media (max-width: 768px) {
             table {
                 font-size: 14px;
@@ -185,6 +192,7 @@
 </head>
 <body>
 <div class="container">
+
     <h1>Каталоги</h1>
     <div th:if="${message}" th:text="${message}" class="message"></div>
     <div class="table-container">
@@ -214,10 +222,12 @@
                 <td th:text="${catalog.createdAt != null} ? ${#temporals.format(catalog.createdAt, 'dd.MM.yyyy HH:mm')} : 'N/A'"></td>
                 <td>
                     <a th:href="@{/projects/__${catalog.project.slug}__}" class="view-btn">Просмотр проекта</a>
-                    <a th:href="@{/projects/catalogs/events/build(projectSlug=${catalog.project.slug}, catalogSlug=${catalog.slug})}" class="create-event-btn">Создать событие</a>
-                    <form th:action="@{/projects/catalogs/__${catalog.slug}__}" method="post" style="display: inline;">
-                        <button type="submit" class="delete-btn" onclick="return confirm('Вы уверены, что хотите удалить каталог?')">Удалить</button>
-                    </form>
+                    <div sec:authorize="hasAuthority('ADMIN')">
+                        <a th:href="@{/projects/catalogs/events/build(projectSlug=${catalog.project.slug}, catalogSlug=${catalog.slug})}" class="create-event-btn">Создать событие</a>
+                        <form th:action="@{/projects/catalogs/__${catalog.slug}__}" method="post" style="display: inline;">
+                            <button type="submit" class="delete-btn" onclick="return confirm('Вы уверены, что хотите удалить каталог?')">Удалить</button>
+                        </form>
+                    </div>
                 </td>
             </tr>
             <tr th:if="${#lists.isEmpty(catalogs)}">

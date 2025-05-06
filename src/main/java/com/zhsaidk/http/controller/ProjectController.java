@@ -3,9 +3,7 @@ package com.zhsaidk.http.controller;
 import com.zhsaidk.database.entity.Catalog;
 import com.zhsaidk.database.entity.Event;
 import com.zhsaidk.database.entity.Project;
-import com.zhsaidk.database.repo.EventSpecification;
 import com.zhsaidk.dto.BuildCreateCatalogDto;
-import com.zhsaidk.dto.BuildEventDto;
 import com.zhsaidk.dto.BuildEventWebDto;
 import com.zhsaidk.dto.BuildProjectDTO;
 import com.zhsaidk.service.CatalogService;
@@ -16,8 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -35,6 +32,8 @@ public class ProjectController {
     private final EventService eventService;
     private final ProjectService projectService;
 
+    // === Projects ===
+
     @GetMapping("/projects")
     public String getProjects(Model model,
                               @RequestParam(value = "page", defaultValue = "0") Integer page,
@@ -51,14 +50,26 @@ public class ProjectController {
         return "project/projects";
     }
 
-    @PostMapping("/projects/delete/{slug}")
-    public String deleteProject(@PathVariable String slug) {
-        projectService.remove(slug);
+    @GetMapping("/projects/build")
+    public String getProjectCreate(Model model) {
+        model.addAttribute("project", new BuildProjectDTO());
+        return "project/build";
+    }
+
+    @PostMapping("/projects")
+    public String createProject(@Valid @ModelAttribute("project") BuildProjectDTO dto,
+                                BindingResult bindingResult,
+                                Model model) {
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("project", dto);
+            return "project/build";
+        }
+        projectService.build(dto);
         return "redirect:/projects";
     }
 
     @GetMapping("/projects/{projectSlug}")
-    public String geProjectPage(Model model,
+    public String getProjectPage(Model model,
                                 @PathVariable("projectSlug") String projectSlug) {
         model.addAttribute("project", projectService.getProjectBySlug(projectSlug));
         return "project/project";
@@ -77,24 +88,13 @@ public class ProjectController {
         return "redirect:/projects";
     }
 
-
-    @GetMapping("/projects/build")
-    public String getProjectCreate(Model model) {
-        model.addAttribute("project", new BuildProjectDTO());
-        return "project/build"; // Maps to project/build.html
-    }
-
-    @PostMapping("/projects")
-    public String createProject(@Valid @ModelAttribute("project") BuildProjectDTO dto,
-                                BindingResult bindingResult,
-                                Model model) {
-        if (bindingResult.hasErrors()) {
-            model.addAttribute("project", dto); // Preserve form input
-            return "project/build"; // Render form with errors
-        }
-        projectService.build(dto);
+    @PostMapping("/projects/delete/{slug}")
+    public String deleteProject(@PathVariable String slug) {
+        projectService.remove(slug);
         return "redirect:/projects";
     }
+
+    // === Catalogs ===
 
     @GetMapping("/projects/catalogs")
     public String getCatalogs(Model model,
@@ -108,19 +108,6 @@ public class ProjectController {
         model.addAttribute("pageSize", size);
         return "catalog/catalogs";
     }
-
-    @PostMapping("/projects/catalogs/{catalogSlug}")
-    public String deleteCatalog(@PathVariable("catalogSlug") String catalogSlug){
-        catalogService.remove(catalogSlug);
-        return "redirect:/projects/catalogs";
-    }
-//
-//    @GetMapping("/projects/catalogs/{catalogSlug}")
-//    public String getCatalog(Model model,
-//                                @PathVariable("catalogSlug") String catalogSlug) {
-//        model.addAttribute("project", projectService.getProjectBySlug(catalogSlug));
-//        return "catalog/catalog";
-//    }
 
     @GetMapping("/projects/catalogs/build")
     public String getCatalogsBuild() {
@@ -139,6 +126,21 @@ public class ProjectController {
         catalogService.build(dto, catalogSlug);
         return "redirect:/projects/catalogs";
     }
+
+    @PostMapping("/projects/catalogs/{catalogSlug}")
+    public String deleteCatalog(@PathVariable("catalogSlug") String catalogSlug) {
+        catalogService.remove(catalogSlug);
+        return "redirect:/projects/catalogs";
+    }
+
+    @GetMapping("/projects/catalogs/{projectSlug}")
+    public String getCatalogWithProjectSlug(@PathVariable("projectSlug") String projectSlug,
+                                            Model model) {
+        model.addAttribute("catalogs", catalogService.findAllCatalogsByProjectSlug(projectSlug));
+        return "catalog/catalogsWithProjectSlug";
+    }
+
+    // === Events ===
 
     @GetMapping("/projects/catalogs/events")
     public String getEvents(Model model,
@@ -164,17 +166,6 @@ public class ProjectController {
         return "event/events";
     }
 
-    @PostMapping("/projects/catalogs/events")
-    public String deleteEvent(@RequestParam("EventId") UUID eventId, RedirectAttributes redirectAttributes) {
-        try {
-            eventService.remove(eventId);
-            redirectAttributes.addFlashAttribute("message", "Событие успешно удалено");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Ошибка при удалении события: " + e.getMessage());
-        }
-        return "redirect:/projects/catalogs/events";
-    }
-
     @GetMapping("/projects/catalogs/events/build")
     public String getEventBuild() {
         return "event/build";
@@ -194,11 +185,16 @@ public class ProjectController {
         return "redirect:/projects/catalogs/events";
     }
 
-    @GetMapping("/projects/catalogs/{projectSlug}")
-    public String getCatalogWithProjectSlug(@PathVariable("projectSlug") String projectSlug,
-                                            Model model) {
-        model.addAttribute("catalogs", catalogService.findAllCatalogsByProjectSlug(projectSlug));
-        return "catalog/catalogsWithProjectSlug";
+    @PostMapping("/projects/catalogs/events")
+    public String deleteEvent(@RequestParam("EventId") UUID eventId,
+                              RedirectAttributes redirectAttributes) {
+        try {
+            eventService.remove(eventId);
+            redirectAttributes.addFlashAttribute("message", "Событие успешно удалено");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Ошибка при удалении события: " + e.getMessage());
+        }
+        return "redirect:/projects/catalogs/events";
     }
 
     @GetMapping("/projects/catalogs/events/{catalogSlug}")
@@ -207,6 +203,8 @@ public class ProjectController {
         model.addAttribute("events", eventService.findAllEventsByCatalogSlug(catalogSlug));
         return "event/eventsWithCatalogSlug";
     }
+
+    // === Auth ===
 
     @GetMapping("/login")
     public String loginPage() {
