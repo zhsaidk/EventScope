@@ -2,10 +2,7 @@ package com.zhsaidk.database.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.validator.constraints.Length;
 
 import java.util.ArrayList;
@@ -34,7 +31,12 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     private Role role;
+//
+//    @ToString.Exclude
+//    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
+//    List<Project> projects = new ArrayList<>();
 
+    @ToString.Exclude
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     List<ApiKey> keys = new ArrayList<>();
 }

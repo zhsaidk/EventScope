@@ -34,20 +34,6 @@ public class UserService implements UserDetailsService {
         return user.getKeys();
     }
 
-    @PostConstruct
-    public void init(){
-        if (!userRepository.existsByUsername("test@gmail.com")){
-            userRepository.save(
-                    User.builder()
-                            .name("TestName")
-                            .username("test@gmail.com")
-                            .password("{noop}123")
-                            .role(Role.ADMIN)
-                            .build()
-            );
-        }
-    }
-
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User currentUser = userRepository.findUserByUsername(username)

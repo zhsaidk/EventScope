@@ -38,7 +38,7 @@
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            transition: background-color 0. slapping ease, transform 0.1s ease;
+            transition: background-color 0.3s ease, transform 0.1s ease;
         }
         .create-button:hover {
             background-color: #218838;
@@ -163,6 +163,13 @@
             border-color: #007bff;
             box-shadow: 0 0 4px rgba(0, 123, 255, 0.3);
         }
+        .debug-roles {
+            margin: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -204,48 +211,35 @@
             </td>
         </tr>
         <tr th:if="${#lists.isEmpty(projects)}">
-            <td colspan="5" th:attrappend="colspan=${#security.hasAuthority('ADMIN') ? 7 : 5}">Проекты отсутствуют</td>
+            <td colspan="5" sec:authorize="!hasAuthority('ADMIN')">Проекты отсутствуют</td>
+            <td colspan="7" sec:authorize="hasAuthority('ADMIN')">Проекты отсутствуют</td>
         </tr>
         </tbody>
     </table>
 
     <!-- Пагинация -->
     <div class="pagination-container" th:if="${totalPages > 1}">
-        <!-- Предыдущая -->
         <a th:href="@{/projects(page=${currentPage - 1}, size=${pageSize})}"
            th:class="${currentPage == 0} ? 'disabled' : ''"
            th:text="'« Предыдущая'"></a>
-
-        <!-- Первая страница -->
         <a th:href="@{/projects(page=0, size=${pageSize})}"
            th:class="${currentPage == 0} ? 'active' : ''"
            th:text="1"></a>
-
-        <!-- Многоточие -->
         <span th:if="${currentPage > 3}" class="ellipsis">...</span>
-
-        <!-- Ближайшие страницы -->
         <th:block th:each="i : ${#numbers.sequence(currentPage - 2, currentPage + 2)}"
                   th:if="${i > 0 and i < totalPages - 1}">
             <a th:href="@{/projects(page=${i}, size=${pageSize})}"
                th:class="${i == currentPage} ? 'active' : ''"
                th:text="${i + 1}"></a>
         </th:block>
-
         <span th:if="${currentPage < totalPages - 3}" class="ellipsis">...</span>
-
-        <!-- Последняя -->
         <a th:href="@{/projects(page=${totalPages - 1}, size=${pageSize})}"
            th:class="${currentPage == totalPages - 1} ? 'active' : ''"
            th:text="${totalPages}"
            th:if="${totalPages > 1}"></a>
-
-        <!-- Следующая -->
         <a th:href="@{/projects(page=${currentPage + 1}, size=${pageSize})}"
            th:class="${currentPage == totalPages - 1} ? 'disabled' : ''"
            th:text="'Следующая »'"></a>
-
-        <!-- Ввод страницы -->
         <label for="pageInput">Перейти: </label>
         <input type="number" id="pageInput" th:value="${currentPage + 1}" min="1"
                th:max="${totalPages}"

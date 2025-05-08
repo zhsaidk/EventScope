@@ -3,10 +3,7 @@ package com.zhsaidk.database.entity;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -28,6 +25,7 @@ public class Event {
 
     private String name;
 
+    @ToString.Exclude
     @ManyToOne
     @JoinColumn(name = "catalog_id", nullable = false)
     private Catalog catalog;
