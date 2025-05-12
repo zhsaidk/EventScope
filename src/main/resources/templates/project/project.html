@@ -95,7 +95,7 @@
             <label for="active">Активен:</label>
             <input type="checkbox" id="active" name="active" th:checked="${project.active}">
         </div>
-        <div class="button-group" sec:authorize="hasRole('ADMIN')">
+        <div class="button-group" sec:authorize="hasAuthority('ADMIN')">
             <button type="submit" class="update-button">Обновить</button>
         </div>
     </form>

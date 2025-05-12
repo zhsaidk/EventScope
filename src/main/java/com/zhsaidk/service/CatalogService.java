@@ -14,6 +14,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.acls.domain.ObjectIdentityImpl;
+import org.springframework.security.acls.model.MutableAcl;
+import org.springframework.security.acls.model.MutableAclService;
+import org.springframework.security.acls.model.ObjectIdentity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -25,6 +29,7 @@ import java.util.Objects;
 public class CatalogService {
     private final CatalogRepository catalogRepository;
     private final ProjectRepository projectRepository;
+    private final MutableAclService aclService;
 
     public PagedModel<Catalog> findAll(PageRequest pageRequest) {
         return new PagedModel<>(catalogRepository.findAll(pageRequest));
@@ -44,9 +49,10 @@ public class CatalogService {
         return ResponseEntity.ok(catalog);
     }
 
+    @Transactional
     public ResponseEntity<?> build(BuildCreateCatalogDto dto, String projectSlug) {
         Project project = projectRepository.findProjectBySlug(projectSlug)
-                .orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found"));
 
         Catalog savedCatalog = catalogRepository.save(Catalog.builder()
                 .name(dto.getName())
@@ -55,6 +61,24 @@ public class CatalogService {
                 .active(dto.getActive())
                 .version(dto.getVersion())
                 .build());
+
+        // --- ACL иерархия: каталог наследует права от проекта ---
+        try {
+            ObjectIdentity catalogOid = new ObjectIdentityImpl(Catalog.class, savedCatalog.getId());
+            ObjectIdentity projectOid = new ObjectIdentityImpl(Project.class, project.getId());
+
+            MutableAcl catalogAcl = aclService.createAcl(catalogOid);
+            MutableAcl projectAcl = (MutableAcl) aclService.readAclById(projectOid);
+
+            catalogAcl.setParent(projectAcl); // установить родителя
+            catalogAcl.setEntriesInheriting(true); // включить наследование
+
+            aclService.updateAcl(catalogAcl);
+        } catch (Exception e) {
+            // Если ACL по какой-то причине не создался — логируем, но не ломаем процесс
+            // Можно добавить кастомную обработку ошибок
+            throw new RuntimeException("Failed to set ACL hierarchy", e);
+        }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(savedCatalog);
     }

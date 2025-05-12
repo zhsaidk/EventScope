@@ -2,8 +2,10 @@ package com.zhsaidk.service;
 
 import com.zhsaidk.database.entity.ApiKey;
 import com.zhsaidk.database.entity.Project;
+import com.zhsaidk.database.entity.User;
 import com.zhsaidk.database.repo.ApiKeyRepository;
 import com.zhsaidk.database.repo.ProjectRepository;
+import com.zhsaidk.database.repo.UserRepository;
 import com.zhsaidk.dto.BuildProjectDTO;
 import com.zhsaidk.util.SlugUtil;
 import jakarta.annotation.PostConstruct;
@@ -15,6 +17,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.acls.domain.BasePermission;
+import org.springframework.security.acls.domain.ObjectIdentityImpl;
+import org.springframework.security.acls.domain.PrincipalSid;
+import org.springframework.security.acls.model.MutableAcl;
+import org.springframework.security.acls.model.MutableAclService;
+import org.springframework.security.acls.model.ObjectIdentity;
+import org.springframework.security.acls.model.Sid;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.server.ResponseStatusException;
@@ -29,12 +39,14 @@ import java.util.Optional;
 public class ProjectService {
     private final ProjectRepository projectRepository;
     private final ApiKeyRepository apiKeyRepository;
+    private final UserRepository userRepository;
+    private final MutableAclService aclService;
 
     public PagedModel<Project> getAll(PageRequest pageRequest) {
         return new PagedModel<>(projectRepository.findAll(pageRequest));
     }
 
-    public Page<Project> getAllProjects(PageRequest pageRequest){
+    public Page<Project> getAllProjects(PageRequest pageRequest) {
         return projectRepository.findAll(pageRequest);
     }
 
@@ -46,14 +58,32 @@ public class ProjectService {
     }
 
     @Transactional
-    public ResponseEntity<Project> build(BuildProjectDTO dto) {
+    public ResponseEntity<Project> build(BuildProjectDTO dto, Authentication authentication) {
+        User user = userRepository.findUserByUsername(authentication.getName())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
         Project savedProject = projectRepository.save(Project.builder()
                 .name(dto.getName())
                 .description(dto.getDescription())
                 .active(dto.getActive())
+                .owner(user)
                 .build());
+
+        ObjectIdentity oid = new ObjectIdentityImpl(Project.class, savedProject.getId());
+        MutableAcl acl = aclService.createAcl(oid);
+
+        Sid ownerSid = new PrincipalSid(user.getUsername());
+
+        // Выдаем права OWNER (все разрешения)
+        acl.insertAce(acl.getEntries().size(), BasePermission.ADMINISTRATION, ownerSid, true);
+        acl.insertAce(acl.getEntries().size(), BasePermission.READ, ownerSid, true);
+        acl.insertAce(acl.getEntries().size(), BasePermission.WRITE, ownerSid, true);
+
+        aclService.updateAcl(acl);
+
         return ResponseEntity.status(HttpStatus.CREATED).body(savedProject);
     }
+
 
     public ResponseEntity<?> modify(String projectSlug, BuildProjectDTO dto) {
 
@@ -83,7 +113,7 @@ public class ProjectService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found"));
     }
 
-    public void save(Project project){
+    public void save(Project project) {
         projectRepository.save(project);
     }
 }

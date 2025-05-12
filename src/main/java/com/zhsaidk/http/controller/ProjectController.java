@@ -15,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -59,12 +60,13 @@ public class ProjectController {
     @PostMapping("/projects")
     public String createProject(@Valid @ModelAttribute("project") BuildProjectDTO dto,
                                 BindingResult bindingResult,
+                                Authentication authentication,
                                 Model model) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("project", dto);
             return "project/build";
         }
-        projectService.build(dto);
+        projectService.build(dto, authentication);
         return "redirect:/projects";
     }
 

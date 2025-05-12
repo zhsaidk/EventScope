@@ -27,10 +27,10 @@ public class Project {
 
     private Boolean active;
 
-//    @ToString.Exclude
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "owner_id")
-//    User owner;
+    @ToString.Exclude
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id", nullable = false)
+    User owner;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

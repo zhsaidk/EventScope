@@ -17,6 +17,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
@@ -46,11 +47,12 @@ public class ProjectRestController {
 
     @PostMapping("/projects")
     public ResponseEntity<?> buildProject(@Valid @RequestBody BuildProjectDTO dto,
-                                          BindingResult bindingResult) {
+                                          BindingResult bindingResult,
+                                          Authentication authentication) {
         if (bindingResult.hasErrors()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(bindingResult.getAllErrors());
         }
-        return projectService.build(dto);
+        return projectService.build(dto, authentication);
     }
 
     @PutMapping("/{projectSlug}")
