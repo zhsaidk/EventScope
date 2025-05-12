@@ -65,9 +65,9 @@ public class ProjectRestController {
         return projectService.modify(projectSlug, dto);
     }
 
-    @DeleteMapping("/{projectSlug}")
-    public ResponseEntity<?> removeProject(@PathVariable("projectSlug") String projectSlug) {
-        return projectService.remove(projectSlug)
+    @DeleteMapping("/{projectId}")
+    public ResponseEntity<?> removeProject(@PathVariable("projectId") Integer projectId) {
+        return projectService.remove(projectId)
                 ? ResponseEntity.noContent().build()
                 : ResponseEntity.notFound().build();
     }

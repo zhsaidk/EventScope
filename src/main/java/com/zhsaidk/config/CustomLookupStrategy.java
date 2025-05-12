@@ -116,17 +116,14 @@ public class CustomLookupStrategy implements LookupStrategy {
                         }
                     }
 
-                    // Если ACE отсутствуют, добавляем ACE для владельца с ADMINISTRATION
                     if (!hasAce) {
                         Permission adminPermission = permissionFactory.buildFromMask(BasePermission.ADMINISTRATION.getMask());
                         acl.insertAce(0, adminPermission, ownerSid, true);
                         System.out.println("Added default ADMINISTRATION ACE for owner: " + ownerSid);
                     }
 
-                    // Устанавливаем entries_inheriting после добавления ACE
                     acl.setEntriesInheriting(entriesInheriting);
 
-                    // Кэшируем ACL
                     acls.put(oid, acl);
                     aclCache.putInCache(acl);
                 } else {

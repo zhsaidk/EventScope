@@ -17,6 +17,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.acls.domain.BasePermission;
 import org.springframework.security.acls.domain.ObjectIdentityImpl;
 import org.springframework.security.acls.domain.PrincipalSid;
@@ -42,15 +43,17 @@ public class ProjectService {
     private final UserRepository userRepository;
     private final MutableAclService aclService;
 
+    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
     public PagedModel<Project> getAll(PageRequest pageRequest) {
         return new PagedModel<>(projectRepository.findAll(pageRequest));
     }
 
+    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
     public Page<Project> getAllProjects(PageRequest pageRequest) {
         return projectRepository.findAll(pageRequest);
     }
 
-
+    @PreAuthorize("hasPermission(#id, 'com.zhsaidk.database.entity.Project', 'READ')")
     public ResponseEntity<?> getById(String projectSlug) {
         return projectRepository.findProjectBySlug(projectSlug)
                 .map(ResponseEntity::ok)
@@ -85,6 +88,7 @@ public class ProjectService {
     }
 
 
+    @PreAuthorize("hasPermission(#projectSlug, 'com.zhsaidk.database.entity.Project', 'WRITE')")
     public ResponseEntity<?> modify(String projectSlug, BuildProjectDTO dto) {
 
         return projectRepository.findProjectBySlug(projectSlug)
@@ -99,15 +103,17 @@ public class ProjectService {
     }
 
     @Transactional
-    public Boolean remove(String projectSlug) {
-        return projectRepository.findProjectBySlug(projectSlug)
+    @PreAuthorize("hasPermission(#id, 'com.zhsaidk.database.entity.Project', 'WRITE')")
+    public Boolean remove(Integer id) {
+        return projectRepository.findById(id)
                 .map(project -> {
-                    projectRepository.deleteBySlug(projectSlug);
+                    projectRepository.deleteById(id);
                     return true;
                 })
                 .orElse(false);
     }
 
+    @PreAuthorize("hasPermission(#id, 'com.zhsaidk.database.entity.Project', 'READ')")
     public Project getProjectBySlug(String slug) {
         return projectRepository.findProjectBySlug(slug)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found"));

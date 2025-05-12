@@ -33,13 +33,11 @@ public class CustomJdbcMutableAclService extends JdbcMutableAclService {
     public CustomJdbcMutableAclService(DataSource dataSource, LookupStrategy lookupStrategy, AclCache aclCache) {
         super(dataSource, lookupStrategy, aclCache);
         this.jdbcTemplate = new JdbcTemplate(dataSource);
-        setAclClassIdSupported(true); // Включаем поддержку class_id_type
+        setAclClassIdSupported(true);
     }
 
     @Override
     protected void createObjectIdentity(ObjectIdentity object, Sid owner) {
-        System.out.println("Creating object identity for: " + object.getType() + ", ID: " + object.getIdentifier() + ", ID type: " + object.getIdentifier().getClass().getName());
-        System.out.println("Owner SID: " + owner);
         Long sidId = createOrRetrieveSidPrimaryKey(owner, true);
         Long classId = createOrRetrieveClassPrimaryKey(object.getType(), true, object.getIdentifier().getClass());
         this.jdbcOperations.update(
@@ -50,27 +48,23 @@ public class CustomJdbcMutableAclService extends JdbcMutableAclService {
                 Boolean.TRUE
         );
 
-        // Получаем ID только что созданной acl_object_identity
         Long aclId = retrieveObjectIdentityPrimaryKey(object);
         if (aclId != null) {
-            // Добавляем ACE для владельца с ADMINISTRATION
             this.jdbcTemplate.update(
                     INSERT_ACE,
                     aclId,
-                    0, // ace_order
+                    0,
                     sidId,
                     BasePermission.ADMINISTRATION.getMask(),
-                    true, // granting
-                    false, // audit_success
-                    false // audit_failure
+                    true,
+                    false,
+                    false
             );
-            System.out.println("Created ACE for owner: " + owner + " with ADMINISTRATION permission");
         }
     }
 
     @Override
     protected Long retrieveObjectIdentityPrimaryKey(ObjectIdentity oid) {
-        System.out.println("Retrieving primary key for: " + oid.getType() + ", ID: " + oid.getIdentifier() + ", ID type: " + oid.getIdentifier().getClass().getName());
         try {
             return this.jdbcOperations.queryForObject(
                     SELECT_OBJECT_IDENTITY_PRIMARY_KEY,
@@ -85,7 +79,6 @@ public class CustomJdbcMutableAclService extends JdbcMutableAclService {
 
     @Override
     protected Long createOrRetrieveClassPrimaryKey(String type, boolean allowCreate, Class idType) {
-        System.out.println("Creating or retrieving class primary key for: " + type + ", ID type: " + idType.getName());
         List<Map<String, Object>> result = this.jdbcOperations.queryForList(
                 "select id, class_id_type from acl_class where class=?",
                 type
@@ -95,7 +88,7 @@ public class CustomJdbcMutableAclService extends JdbcMutableAclService {
             Map<String, Object> row = result.get(0);
             String storedType = (String) row.get("class_id_type");
             if (storedType == null || !storedType.equals(idType.getName())) {
-                throw new IllegalStateException("class_id_type mismatch or missing for " + type + ", expected: " + idType.getName() + ", found: " + storedType);
+                throw new IllegalStateException("class_id_type mismatch for " + type);
             }
             return (Long) row.get("id");
         }
@@ -114,12 +107,6 @@ public class CustomJdbcMutableAclService extends JdbcMutableAclService {
 
     @Override
     public MutableAcl createAcl(ObjectIdentity objectIdentity) {
-        System.out.println("Creating ACL for: " + objectIdentity.getType() + ", ID: " + objectIdentity.getIdentifier() + ", ID type: " + objectIdentity.getIdentifier().getClass().getName());
-        try {
-            return super.createAcl(objectIdentity);
-        } catch (Exception e) {
-            System.out.println("Failed to create ACL: " + e.getMessage());
-            throw e;
-        }
+        return super.createAcl(objectIdentity);
     }
 }

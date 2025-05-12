@@ -11,7 +11,6 @@ public class CustomAclConversionService {
     public static ConversionService createConversionService() {
         GenericConversionService conversionService = new GenericConversionService();
 
-        // Конвертер для UUID в String
         conversionService.addConverter(new Converter<UUID, String>() {
             @Override
             public String convert(UUID source) {
@@ -19,7 +18,6 @@ public class CustomAclConversionService {
             }
         });
 
-        // Конвертер для Integer в String
         conversionService.addConverter(new Converter<Integer, String>() {
             @Override
             public String convert(Integer source) {
@@ -27,7 +25,6 @@ public class CustomAclConversionService {
             }
         });
 
-        // Конвертер для String в String (для случаев, когда идентификатор уже строка)
         conversionService.addConverter(new Converter<String, String>() {
             @Override
             public String convert(String source) {

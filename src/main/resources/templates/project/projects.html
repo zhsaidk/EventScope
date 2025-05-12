@@ -200,7 +200,7 @@
             <td th:text="${#temporals.format(project.createdAt, 'dd.MM.yyyy HH:mm')}"></td>
             <td sec:authorize="hasAuthority('ADMIN')">
                 <a th:href="@{/projects/__${project.slug}__}" class="view-button">Просмотр</a>
-                <form th:action="@{/projects/delete/__${project.slug}__}" method="post" style="display: inline;">
+                <form th:action="@{/projects/delete/__${project.getId()}__}" method="post" style="display: inline;">
                     <button type="submit" class="delete-button"
                             onclick="return confirm('Вы уверены, что хотите удалить проект?')">Удалить</button>
                 </form>

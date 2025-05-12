@@ -52,7 +52,6 @@ public class AclConfig {
 
     @Bean
     public AclAuthorizationStrategy aclAuthorizationStrategy() {
-        // Разрешаем операции для текущего пользователя (для тестов)
         return new AclAuthorizationStrategyImpl(new SimpleGrantedAuthority("ADMIN"));
     }
 
