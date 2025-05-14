@@ -1,57 +1,127 @@
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f9;
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f7fa;
     margin: 0;
     padding: 0;
 }
+
 .container {
     max-width: 600px;
-    margin: 0 auto;
-    padding: 20px;
+    margin: 30px auto;
+    padding: 25px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
+
 h1 {
-    color: #333;
     text-align: center;
+    color: #2c3e50;
+    font-size: 2.2em;
+    margin-bottom: 25px;
 }
+
 .form-group {
     margin-bottom: 20px;
 }
-label {
+
+.form-group label {
     display: block;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
     font-weight: bold;
-    color: #555;
+    color: #34495e;
+    font-size: 1.1em;
 }
-input[type="text"],
-textarea,
-select {
+
+.form-group input[type="text"],
+.form-group textarea,
+.form-group select {
     width: 100%;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 14px;
+    padding: 12px;
+    border: 1px solid #ccd1d9;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-size: 1em;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
-textarea {
+
+.form-group input[type="text"]:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 8px rgba(0, 123, 255, 0.2);
+    outline: none;
+}
+
+.form-group textarea {
+    height: 100px;
     resize: vertical;
-    min-height: 100px;
 }
-button {
-    padding: 10px 20px;
+
+.form-group input[type="checkbox"] {
+    margin-top: 10px;
+    width: 20px;
+    height: 20px;
+    vertical-align: middle;
+}
+
+.button-group {
+    text-align: center;
+    margin-top: 30px;
+}
+
+.update-button {
+    padding: 12px 30px;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
+    font-size: 1.1em;
+    font-weight: bold;
     cursor: pointer;
-    font-size: 16px;
-    transition: background-color 0.2s;
-}
-.update-btn {
     background-color: #28a745;
     color: white;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
 }
-.update-btn:hover {
+
+.update-button:hover {
     background-color: #218838;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
+
+.update-button:active {
+    transform: scale(0.95);
+}
+
 .error {
     color: #dc3545;
-    margin-top: 10px;
     text-align: center;
+    margin-bottom: 20px;
+    padding: 10px;
+    background-color: #ffe6e6;
+    border-radius: 6px;
+    font-size: 1em;
+}
+
+@media (max-width: 600px) {
+    .container {
+        margin: 15px;
+        padding: 15px;
+    }
+
+    h1 {
+        font-size: 1.8em;
+    }
+
+    .form-group input[type="text"],
+    .form-group textarea,
+    .form-group select {
+        padding: 10px;
+        font-size: 0.95em;
+    }
+
+    .update-button {
+        padding: 10px 20px;
+        font-size: 1em;
+        width: 100%;
+        box-sizing: border-box;
+    }
 }

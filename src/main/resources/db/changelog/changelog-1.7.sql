@@ -19,7 +19,9 @@ add column user_id INTEGER REFERENCES users(id) on delete cascade ;
 
 --changeset zhavokhir:1.7.3
 INSERT INTO users(name, username, password, role) VALUES
-                                                      ('AdminUser', 'admin@gmail.com', '{noop}123', 'ADMIN');
+                                                      ('User', 'user@gmail.com', '{noop}123', 'ADMIN'),
+                                                      ('Admin', 'admin@gmail.com', '{noop}123', 'ADMIN'),
+                                                      ('test', 'test@gmail.com', '{noop}123', 'ADMIN');
 --rollback delete from users where username = 'admin@gmail.com'
 
 --changeset zhavokhir:1.7.4

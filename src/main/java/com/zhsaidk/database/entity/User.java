@@ -1,5 +1,6 @@
 package com.zhsaidk.database.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -31,11 +32,13 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     private Role role;
-//
-//    @ToString.Exclude
-//    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
-//    List<Project> projects = new ArrayList<>();
 
+    @JsonIgnore
+    @ToString.Exclude
+    @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    List<Project> projects = new ArrayList<>();
+
+    @JsonIgnore
     @ToString.Exclude
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     List<ApiKey> keys = new ArrayList<>();

@@ -4,75 +4,128 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Детали проекта</title>
+
+    <!-- Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 20px;
+        }
+
         .container {
             max-width: 800px;
-            margin: 20px auto;
-            padding: 20px;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            margin: 0 auto;
         }
 
         h1 {
             text-align: center;
-            color: #333;
+            margin-bottom: 30px;
         }
 
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
 
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
+        label {
             font-weight: bold;
+            display: block;
+            margin-bottom: 8px;
         }
 
-        .form-group input[type="text"],
-        .form-group textarea {
+        input[type="text"],
+        textarea,
+        select {
             width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
+            padding: 10px;
+            border: 1px solid #ccd0d5;
+            border-radius: 6px;
+            font-size: 14px;
         }
 
-        .form-group textarea {
-            height: 100px;
-            resize: vertical;
-        }
-
-        .form-group input[type="checkbox"] {
-            margin-top: 10px;
+        input[type="checkbox"] {
+            transform: scale(1.2);
+            margin-right: 10px;
         }
 
         .button-group {
-            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
         }
 
-        .update-button {
-            padding: 10px 20px;
+        .update-button,
+        .share-button,
+        .share-submit-button {
             background-color: #007bff;
-            color: white;
             border: none;
-            border-radius: 4px;
-            font-size: 16px;
-            font-weight: bold;
+            color: white;
+            padding: 10px 18px;
+            font-size: 14px;
+            border-radius: 6px;
             cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.1s ease;
+            transition: background-color 0.3s;
         }
 
-        .update-button:hover {
+        .update-button:hover,
+        .share-button:hover,
+        .share-submit-button:hover {
             background-color: #0056b3;
-            transform: scale(1.05);
         }
 
-        .update-button:active {
-            transform: scale(0.95);
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 10;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal.show {
+            display: block;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 8% auto;
+            padding: 30px;
+            border: 1px solid #888;
+            width: 500px;
+            border-radius: 12px;
+        }
+
+        .close-button {
+            float: right;
+            font-size: 22px;
+            font-weight: bold;
+            color: #aaa;
+            cursor: pointer;
+        }
+
+        .close-button:hover {
+            color: black;
         }
 
         .error {
-            color: #dc3545;
-            text-align: center;
-            margin-bottom: 15px;
+            color: red;
+            margin-bottom: 20px;
+        }
+
+        .select2-container--default .select2-selection--multiple {
+            min-height: 38px;
         }
     </style>
 </head>
@@ -83,54 +136,90 @@
     <form id="projectForm" th:action="@{/projects/{projectSlug}(projectSlug=${project.slug})}" method="POST">
         <input type="hidden" name="_csrf" th:if="${_csrf}" th:value="${_csrf.token}"/>
         <input type="hidden" name="_method" value="PUT"/>
+
         <div class="form-group">
             <label for="name">Название:</label>
             <input type="text" id="name" name="name" th:value="${project.name}" required>
         </div>
+
         <div class="form-group">
             <label for="description">Описание:</label>
             <textarea id="description" name="description" th:text="${project.description}"></textarea>
         </div>
+
         <div class="form-group">
-            <label for="active">Активен:</label>
-            <input type="checkbox" id="active" name="active" th:checked="${project.active}">
+            <label for="active">
+                <input type="checkbox" id="active" name="active" th:checked="${project.active}">
+                Активен
+            </label>
         </div>
-        <div class="button-group" sec:authorize="hasRole('ADMIN')">
+
+        <div class="button-group" sec:authorize="hasAuthority('ADMIN')">
             <button type="submit" class="update-button">Обновить</button>
+            <button type="button" class="share-button" onclick="openShareModal()">Поделиться</button>
         </div>
     </form>
+
+    <!-- Share Modal -->
+    <div id="shareModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeShareModal()">×</span>
+            <h2>Поделиться проектом</h2>
+            <form id="shareForm" th:action="@{/projects/share}" method="POST">
+                <input type="hidden" name="_csrf" th:if="${_csrf}" th:value="${_csrf.token}"/>
+                <input type="hidden" name="projectSlug" th:value="${project.slug}"/>
+
+                <div class="form-group">
+                    <label for="toUserId">Выберите пользователей:</label>
+                    <select id="toUserId" name="toUserId" multiple="multiple" required class="select2">
+                        <option th:each="user : ${users}" th:value="${user.id}" th:text="${user.username}"></option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="role">Роль:</label>
+                    <select id="role" name="role" required>
+                        <option value="OWNER">OWNER</option>
+                        <option value="WRITER">WRITER</option>
+                        <option value="READ">READER</option>
+                    </select>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="share-submit-button">Поделиться</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
+
 <script>
     document.addEventListener("DOMContentLoaded", () => {
-        const form = document.getElementById("projectForm");
+        // Инициализация Select2
+        $('.select2').select2({
+            placeholder: "Выберите пользователей",
+            width: '100%',
+            dropdownParent: $('#shareModal')
+        });
+
+        const projectForm = document.getElementById("projectForm");
+        const shareForm = document.getElementById("shareForm");
         const errorDiv = document.getElementById("error");
 
-        form.addEventListener("submit", async (e) => {
-            e.preventDefault();
-
-            const formData = new FormData(form);
-            // Убедимся, что active отправляется как true/false
-            formData.set("active", form.querySelector("#active").checked);
-
-            try {
-                const response = await fetch(form.action, {
-                    method: "POST", // Используем POST с _method=PUT
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || `Не удалось обновить проект: ${response.status}`);
-                }
-
-                alert("Проект успешно обновлён");
-                window.location.href = "/projects";
-            } catch (error) {
-                console.error("Ошибка обновления проекта:", error);
-                errorDiv.textContent = error.message;
-                errorDiv.style.display = "block";
-            }
+        // Обработка формы обновления проекта
+        projectForm.addEventListener("submit", function () {
+            errorDiv.style.display = 'none';
         });
+
+        // Открытие модального окна
+        window.openShareModal = function () {
+            document.getElementById("shareModal").classList.add("show");
+        }
+
+        // Закрытие модального окна
+        window.closeShareModal = function () {
+            document.getElementById("shareModal").classList.remove("show");
+        }
     });
 </script>
 </body>

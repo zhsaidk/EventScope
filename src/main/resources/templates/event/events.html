@@ -281,9 +281,12 @@
                 <td th:text="${event.createdAt != null} ? ${#temporals.format(event.createdAt, 'dd.MM.yyyy HH:mm')} : 'N/A'"></td>
                 <td>
                     <div sec:authorize="hasAuthority('ADMIN')">
-                        <form th:action="@{/projects/catalogs/events}" method="post" style="display: inline;">
+                        <form th:action="@{/projects/__${event.catalog?.project?.slug}__/catalogs/__${event.catalog?.slug}__/events/delete}"
+                              method="post"
+                              style="display: inline;">
                             <input type="hidden" name="EventId" th:value="${event.id}"/>
-                            <button type="submit" class="delete-btn" onclick="return confirm('Вы уверены, что хотите удалить событие?')">Удалить</button>
+                            <button type="submit" class="delete-btn"
+                                    onclick="return confirm('Вы уверены, что хотите удалить событие?')">Удалить</button>
                         </form>
                     </div>
                 </td>

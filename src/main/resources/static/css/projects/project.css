@@ -1,63 +1,203 @@
-.container {
-    max-width: 800px;
-    margin: 20px auto;
-    padding: 20px;
+/* Общие стили */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f7fa;
+    margin: 0;
+    padding: 0;
 }
 
+.container {
+    max-width: 900px;
+    margin: 30px auto;
+    padding: 25px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Заголовок */
 h1 {
     text-align: center;
-    color: #333;
+    color: #2c3e50;
+    font-size: 2.2em;
+    margin-bottom: 25px;
 }
 
+/* Группа формы */
 .form-group {
-    margin-bottom: 15px;
+    margin-bottom: 20px;
 }
 
 .form-group label {
     display: block;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
     font-weight: bold;
+    color: #34495e;
+    font-size: 1.1em;
 }
 
 .form-group input[type="text"],
-.form-group textarea {
+.form-group textarea,
+.form-group select {
     width: 100%;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    padding: 12px;
+    border: 1px solid #ccd1d9;
+    border-radius: 6px;
     box-sizing: border-box;
+    font-size: 1em;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-group input[type="text"]:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 8px rgba(0, 123, 255, 0.2);
+    outline: none;
 }
 
 .form-group textarea {
-    height: 100px;
+    height: 120px;
     resize: vertical;
 }
 
-.form-group input[type="checkbox"] {
-    margin-top: 10px;
-}
-
+/* Кнопки */
 .button-group {
     text-align: center;
+    margin-top: 30px;
+}
+
+.update-button,
+.share-button,
+.share-submit-button {
+    padding: 12px 30px;
+    border: none;
+    border-radius: 6px;
+    font-size: 1.1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+    margin: 0 15px;
 }
 
 .update-button {
-    padding: 10px 20px;
     background-color: #007bff;
     color: white;
-    border: none;
-    border-radius: 4px;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.1s ease;
 }
 
-.update-button:hover {
+.share-button {
+    background-color: #28a745;
+    color: white;
+}
+
+.share-submit-button {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.update-button:hover,
+.share-button:hover,
+.share-submit-button:hover {
     background-color: #0056b3;
-    transform: scale(1.05);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
-.update-button:active {
+.share-button:hover {
+    background-color: #218838;
+}
+
+.share-submit-button:hover {
+    background-color: #138496;
+}
+
+.update-button:active,
+.share-button:active,
+.share-submit-button:active {
     transform: scale(0.95);
+}
+
+/* Модальное окно */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.modal.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-content {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 550px;
+    position: relative;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.close-button {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 28px;
+    cursor: pointer;
+    color: #34495e;
+    transition: color 0.3s ease;
+}
+
+.close-button:hover {
+    color: #000;
+}
+
+/* Адаптивность */
+@media (max-width: 600px) {
+    .container {
+        margin: 15px;
+        padding: 15px;
+    }
+
+    h1 {
+        font-size: 1.8em;
+    }
+
+    .form-group input[type="text"],
+    .form-group textarea,
+    .form-group select {
+        padding: 10px;
+        font-size: 0.95em;
+    }
+
+    .update-button,
+    .share-button,
+    .share-submit-button {
+        padding: 10px 20px;
+        font-size: 1em;
+        margin: 10px 5px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .button-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .modal-content {
+        padding: 20px;
+        max-width: 90%;
+    }
 }

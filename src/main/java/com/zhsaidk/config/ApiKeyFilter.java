@@ -26,12 +26,13 @@ public class ApiKeyFilter extends OncePerRequestFilter {
     private static final String API_KEY_HEADER = "X-API-KEY";
     private final ApiKeyRepository apiKeyRepository;
     private static final String[] EXCLUDE_PATHS = {
-            "/user", "/login", "/rest", "/project"
+            "/user", "/login", "/rest", "/project",
+            "/css/**", "/js/**", "/images/**", "/error"
     };
 
     private boolean isExcluded(String path) {
         for (String exclude : EXCLUDE_PATHS) {
-            if (path.startsWith(exclude)) {
+            if (path.startsWith(exclude.replace("/**", ""))) {
                 return true;
             }
         }

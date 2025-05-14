@@ -9,6 +9,7 @@ import com.zhsaidk.service.EventService;
 import com.zhsaidk.service.CatalogService;
 import com.zhsaidk.service.ProjectService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -24,6 +25,7 @@ public class    MyWebSocketHandler extends TextWebSocketHandler {
     private final EventService eventService;
     private final ProjectService projectService;
     private final CatalogService catalogService;
+    private Authentication authentication;
 
     @Override
     public void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
@@ -41,7 +43,7 @@ public class    MyWebSocketHandler extends TextWebSocketHandler {
         BuildEventDto eventDto = objectMapper.readValue(message.getPayload(), BuildEventDto.class);
 
         // Вызываем метод build для создания события
-        Object result = eventService.build(eventDto, projectSlug, catalogSlug);
+        Object result = eventService.build(eventDto, projectSlug, catalogSlug, authentication);
 
         // Отправляем результат клиенту
         session.sendMessage(new TextMessage(objectMapper.writeValueAsString(result)));

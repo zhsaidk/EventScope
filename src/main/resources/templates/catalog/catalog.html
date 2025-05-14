@@ -1,16 +1,39 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Catalog Details</title>
     <link rel="stylesheet" href="/css/catalogs/catalog.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
 </head>
 <body>
-<div id="root"></div>
-<script type="text/babel" src="/js/catalogs/catalog.js"></script>
+<div class="container">
+    <h1>Детали каталога</h1>
+    <div id="error" class="error" style="display: none;"></div>
+    <form id="catalogForm" th:action="@{/projects/{projectSlug}/catalogs/{catalogSlug}(projectSlug=${catalog.project.slug}, catalogSlug=${catalog.slug})}" method="POST">
+        <input type="hidden" name="_csrf" th:if="${_csrf}" th:value="${_csrf.token}"/>
+        <input type="hidden" name["_method"] value="PUT"/>
+        <div class="form-group">
+            <label for="name">Название:</label>
+            <input type="text" id="name" name="name" th:value="${catalog.name}" required>
+        </div>
+        <div class="form-group">
+            <label for="description">Описание:</label>
+            <textarea id="description" name="description" th:text="${catalog.description}"></textarea>
+        </div>
+        <div class="form-group">
+            <label for="active">Активен:</label>
+            <input type="checkbox" id="active" name="active" th:checked="${catalog.active}">
+        </div>
+        <div class="form-group">
+            <label for="version">Версия:</label>
+            <input type="text" id="version" name="version" th:value="${catalog.version}">
+        </div>
+        <div class="button-group">
+            <button type="submit" class="update-button">Обновить каталог</button>
+        </div>
+    </form>
+</div>
+<script src="/js/catalogs/catalog.js"></script>
 </body>
 </html>

@@ -221,10 +221,10 @@
                 <td th:text="${catalog.version} ?: 'N/A'"></td>
                 <td th:text="${catalog.createdAt != null} ? ${#temporals.format(catalog.createdAt, 'dd.MM.yyyy HH:mm')} : 'N/A'"></td>
                 <td>
-                    <a th:href="@{/projects/__${catalog.project.slug}__}" class="view-btn">Просмотр проекта</a>
+                    <a th:href="@{/projects/catalogs/__${catalog.slug}__/edit}" class="view-btn">Изменить</a>
                     <div sec:authorize="hasAuthority('ADMIN')">
                         <a th:href="@{/projects/catalogs/events/build(projectSlug=${catalog.project.slug}, catalogSlug=${catalog.slug})}" class="create-event-btn">Создать событие</a>
-                        <form th:action="@{/projects/catalogs/__${catalog.slug}__}" method="post" style="display: inline;">
+                        <form th:action="@{/projects/__${catalog.project.slug}__/catalogs/__${catalog.slug}__/delete}" method="post" style="display: inline;">
                             <button type="submit" class="delete-btn" onclick="return confirm('Вы уверены, что хотите удалить каталог?')">Удалить</button>
                         </form>
                     </div>

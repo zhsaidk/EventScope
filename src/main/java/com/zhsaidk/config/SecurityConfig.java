@@ -32,6 +32,7 @@ public class SecurityConfig {
                 .sessionManagement(session->session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth->auth
+                        .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/**").hasAnyAuthority("ADMIN", "USER")
                         .requestMatchers(HttpMethod.POST, "/api/**").hasAuthority("ADMIN")
                         .anyRequest().authenticated())
@@ -52,6 +53,7 @@ public class SecurityConfig {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth->auth
+                        .requestMatchers("/css/**", "/js/**", "/images/**", "/login", "/error").permitAll()
                         .requestMatchers(HttpMethod.GET, "/projects/**", "/user/**").hasAnyAuthority("ADMIN", "USER")
                         .requestMatchers(HttpMethod.POST, "/projects/**", "/user/**").hasAuthority("ADMIN")
 

@@ -4,6 +4,8 @@ import com.zhsaidk.database.entity.ApiKey;
 import com.zhsaidk.database.entity.Role;
 import com.zhsaidk.database.entity.User;
 import com.zhsaidk.database.repo.UserRepository;
+import com.zhsaidk.dto.UserReadDto;
+import com.zhsaidk.mapper.UserReadMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,6 +23,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
+    private final UserReadMapper readMapper;
 
     public User getUser(Principal principal){
         return userRepository.findUserByUsername(principal.getName())
@@ -32,6 +35,12 @@ public class UserService implements UserDetailsService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         return user.getKeys();
+    }
+
+    public List<UserReadDto> findAllUsersAsDto(){
+        return userRepository.findAll()
+                .stream().map(readMapper::map)
+                .toList();
     }
 
     @Override

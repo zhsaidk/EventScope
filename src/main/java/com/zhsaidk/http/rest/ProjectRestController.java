@@ -17,6 +17,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,37 +36,42 @@ public class ProjectRestController {
 
     @GetMapping("/projects")
     public ResponseEntity<PagedModel<Project>> getAllProject(@RequestParam(value = "page", defaultValue = "0") Integer page,
-                                                             @RequestParam(value = "size", defaultValue = "10") Integer size) {
-        return ResponseEntity.ok(projectService.getAll(PageRequest.of(page, size, Sort.by("createdAt"))));
+                                                             @RequestParam(value = "size", defaultValue = "10") Integer size,
+                                                             Authentication authentication) {
+        return ResponseEntity.ok(projectService.getAll(PageRequest.of(page, size, Sort.by("createdAt")), authentication));
     }
 
     @GetMapping("/{projectSlug}")
-    public ResponseEntity<?> getProjectById(@PathVariable("projectSlug") String projectSlug) {
-        return projectService.getById(projectSlug);
+    public ResponseEntity<?> getProjectById(@PathVariable("projectSlug") String projectSlug,
+                                            Authentication authentication) {
+        return projectService.getByProjectSlug(projectSlug, authentication);
     }
 
     @PostMapping("/projects")
     public ResponseEntity<?> buildProject(@Valid @RequestBody BuildProjectDTO dto,
+                                          Authentication authentication,
                                           BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(bindingResult.getAllErrors());
         }
-        return projectService.build(dto);
+        return projectService.build(dto, authentication);
     }
 
     @PutMapping("/{projectSlug}")
     public ResponseEntity<?> modifyProject(@PathVariable("projectSlug") String projectSlug,
                                            @Valid @RequestBody BuildProjectDTO dto,
-                                           BindingResult bindingResult) {
+                                           BindingResult bindingResult,
+                                           Authentication authentication) {
         if (bindingResult.hasErrors()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(bindingResult.getAllErrors());
         }
-        return projectService.modify(projectSlug, dto);
+        return projectService.modify(projectSlug, dto, authentication);
     }
 
     @DeleteMapping("/{projectSlug}")
-    public ResponseEntity<?> removeProject(@PathVariable("projectSlug") String projectSlug) {
-        return projectService.remove(projectSlug)
+    public ResponseEntity<?> removeProject(@PathVariable("projectSlug") String projectSlug,
+                                           Authentication authentication) {
+        return projectService.remove(projectSlug, authentication)
                 ? ResponseEntity.noContent().build()
                 : ResponseEntity.notFound().build();
     }
@@ -75,48 +81,53 @@ public class ProjectRestController {
 
     @GetMapping("/projects/catalogs")
     public ResponseEntity<PagedModel<Catalog>> getAllCatalogs(@RequestParam(value = "page", defaultValue = "0") Integer page,
-                                                              @RequestParam(value = "szie", defaultValue = "10") Integer size) {
-        return ResponseEntity.ok(catalogService.findAll(PageRequest.of(page, size, Sort.by("createdAt"))));
+                                                              @RequestParam(value = "szie", defaultValue = "10") Integer size,
+                                                              Authentication authentication) {
+        return ResponseEntity.ok(catalogService.findAll(PageRequest.of(page, size, Sort.by("createdAt")), authentication));
     }
 
     @GetMapping("/{projectSlug}/{catalogSlug}")
     public ResponseEntity<?> getCatalogById(
             @PathVariable("projectSlug") String projectSlug,
-            @PathVariable("catalogSlug") String catalogSlug) {
-        return catalogService.findById(projectSlug, catalogSlug);
+            @PathVariable("catalogSlug") String catalogSlug,
+            Authentication authentication) {
+        return catalogService.findById(projectSlug, catalogSlug, authentication);
     }
 
     @PostMapping("/{projectSlug}/catalogs")
     public ResponseEntity<?> buildCatalog(@Valid @RequestBody BuildCreateCatalogDto dto,
                                           BindingResult bindingResult,
-                                          @PathVariable("projectSlug") String projectSlug) {
+                                          @PathVariable("projectSlug") String projectSlug,
+                                          Authentication authentication) {
         if (bindingResult.hasErrors()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(bindingResult.getAllErrors());
         }
 
-        return catalogService.build(dto, projectSlug);
+        return catalogService.build(dto, projectSlug, authentication);
     }
 
     @PutMapping("/{projectSlug}/{catalogSlug}")
     public ResponseEntity<?> update(@PathVariable("projectSlug") String projectSlug,
                                     @PathVariable("catalogSlug") String catalogSlug,
                                     @Valid @RequestBody BuildReadCatalogDto dto,
-                                    BindingResult bindingResult) {
+                                    BindingResult bindingResult,
+                                    Authentication authentication) {
         if (bindingResult.hasErrors()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(bindingResult.getAllErrors());
         }
-        return catalogService.update(projectSlug, catalogSlug, dto);
+        return catalogService.update(projectSlug, catalogSlug, dto, authentication);
     }
 
     @DeleteMapping("/{projectSlug}/{catalogSlug}")  //todo
     public ResponseEntity<?> removeCatalog(@PathVariable("projectSlug") String projectSlug,
-                                           @PathVariable("catalogSlug") String catalogSlug) {
+                                           @PathVariable("catalogSlug") String catalogSlug,
+                                           Authentication authentication) {
         if (!catalogRepository.existsBySlugAndProjectSlug(catalogSlug, projectSlug)) {
             return ResponseEntity.badRequest().build();
         }
         ;
 
-        return catalogService.remove(catalogSlug)
+        return catalogService.remove(projectSlug, catalogSlug, authentication)
                 ? ResponseEntity.noContent().build()
                 : ResponseEntity.notFound().build();
     }
@@ -128,22 +139,21 @@ public class ProjectRestController {
     public ResponseEntity<?> builtEvent(@Valid @RequestBody BuildEventDto dto,
                                         BindingResult bindingResult,
                                         @PathVariable(value = "projectSlug") String projectSlug,
-                                        @PathVariable(value = "catalogSlug") String catalogSlug) {
+                                        @PathVariable(value = "catalogSlug") String catalogSlug,
+                                        Authentication authentication) {
         if (bindingResult.hasErrors()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
-        return eventService.build(dto, projectSlug, catalogSlug);
+        return eventService.build(dto, projectSlug, catalogSlug, authentication);
     }
 
     @DeleteMapping("/{projectSlug}/{catalogSlug}/{eventId}")
     public ResponseEntity<?> removeEvent(@PathVariable("projectSlug") String projectSlug,
                                          @PathVariable("catalogSlug") String catalogSlug,
-                                         @PathVariable("eventId") UUID eventId) {
-        if (!catalogRepository.existsBySlugAndProjectSlug(catalogSlug, projectSlug)) {
-            return ResponseEntity.badRequest().build();
-        }
+                                         @PathVariable("eventId") UUID eventId,
+                                         Authentication authentication) {
 
-        return eventService.remove(eventId)
+        return eventService.remove(projectSlug, catalogSlug, eventId, authentication)
                 ? ResponseEntity.noContent().build()
                 : ResponseEntity.notFound().build();
     }
@@ -151,11 +161,12 @@ public class ProjectRestController {
     @GetMapping("/{projectSlug}/{catalogSlug}/{eventId}")
     public ResponseEntity<?> getEventById(@PathVariable("projectSlug") String projectSlug,
                                           @PathVariable("catalogSlug") String catalogSlug,
-                                          @PathVariable("eventId") UUID eventId) {
+                                          @PathVariable("eventId") UUID eventId,
+                                          Authentication authentication) {
         if (!catalogRepository.existsBySlugAndProjectSlug(catalogSlug, projectSlug)) {
             return ResponseEntity.badRequest().build();
         }
-        return eventService.getById(eventId);
+        return eventService.getById(eventId, projectSlug, catalogSlug, authentication);
     }
 
     @PutMapping("/{projectSlug}/{catalogSlug}/{eventId}") //todo
@@ -163,15 +174,12 @@ public class ProjectRestController {
                                          @Valid @RequestBody BuildCreateEventDto dto,
                                          BindingResult bindingResult,
                                          @PathVariable(value = "projectSlug") String projectSlug,
-                                         @PathVariable(value = "catalogSlug") String catalogSlug) {
-        if (!catalogRepository.existsBySlugAndProjectSlug(catalogSlug, projectSlug)) {
-            return ResponseEntity.badRequest().build();
-        }
-
+                                         @PathVariable(value = "catalogSlug") String catalogSlug,
+                                         Authentication authentication) {
         if (bindingResult.hasErrors()) {
             return ResponseEntity.badRequest().body(bindingResult.getAllErrors());
         }
-        return eventService.update(eventId, dto);
+        return eventService.update(eventId, dto, projectSlug, catalogSlug, authentication);
     }
 
     @GetMapping("/projects/catalogs/events")
@@ -179,7 +187,8 @@ public class ProjectRestController {
                                                           @RequestParam(name = "begin", required = false) LocalDateTime begin,
                                                           @RequestParam(name = "end", required = false) LocalDateTime end,
                                                           @RequestParam(name = "page", defaultValue = "0") Integer page,
-                                                          @RequestParam(name = "size", defaultValue = "10") Integer size) {
-        return eventService.findByParameters(name, begin, end, page, size);
+                                                          @RequestParam(name = "size", defaultValue = "10") Integer size,
+                                                          Authentication authentication) {
+        return eventService.findByParameters(name, begin, end, page, size, authentication);
     }
 }
