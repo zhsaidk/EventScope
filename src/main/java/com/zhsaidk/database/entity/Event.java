@@ -1,5 +1,6 @@
 package com.zhsaidk.database.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.*;
@@ -28,6 +29,7 @@ public class Event {
     @ToString.Exclude
     @ManyToOne
     @JoinColumn(name = "catalog_id", nullable = false)
+    @JsonIgnore
     private Catalog catalog;
 
     @Column(columnDefinition = "jsonb")

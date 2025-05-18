@@ -34,21 +34,18 @@ public class ProjectService {
     private final PermissionService permissionService;
 
     public PagedModel<Project> getAll(PageRequest pageRequest, Authentication authentication) {
-        Integer userId = userRepository.findUserIdByUsername(authentication.getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
-        return new PagedModel<>(projectRepository.findAllByUserIdAndAnyRole(pageRequest, userId));
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        return new PagedModel<>(projectRepository.findAllByUserIdAndAnyRole(pageRequest, userDetails.getId()));
     }
 
     public Page<Project> getAllProjects(PageRequest pageRequest, Authentication authentication) {
-        Integer userId = userRepository.findUserIdByUsername(authentication.getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
-        return projectRepository.findAllByUserIdAndAnyRole(pageRequest, userId);
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        return projectRepository.findAllByUserIdAndAnyRole(pageRequest, userDetails.getId());
     }
 
     public ResponseEntity<?> getByProjectSlug(String projectSlug, Authentication authentication) {
-        Integer userId = userRepository.findUserIdByUsername(authentication.getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-        if (!permissionService.hasAnyPermission(projectSlug, userId)){
+
+        if (!permissionService.hasAnyPermission(projectSlug, authentication)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("you dont have permission");
         }
 
@@ -82,10 +79,7 @@ public class ProjectService {
     public ResponseEntity<?> modify(String projectSlug,
                                     BuildProjectDTO dto,
                                     Authentication authentication) {
-        Integer userId = userRepository.findUserIdByUsername(authentication.getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
-
-        if (!permissionService.hasPermission(projectSlug, userId, List.of(PermissionRole.OWNER, PermissionRole.WRITER))){
+        if (!permissionService.hasPermission(projectSlug, authentication, List.of(PermissionRole.OWNER, PermissionRole.WRITER))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "you have not permission");
         }
 
@@ -102,12 +96,10 @@ public class ProjectService {
 
     @Transactional
     public Boolean remove(String projectSlug, Authentication authentication) {
-        Integer userId = userRepository.findUserIdByUsername(authentication.getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-
-        if(!permissionService.hasPermission(projectSlug, userId, List.of(PermissionRole.OWNER))){
+        if (!permissionService.hasPermission(projectSlug, authentication, List.of(PermissionRole.OWNER))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only owner can delete");
-        };
+        }
+        ;
 
         return projectRepository.findProjectBySlug(projectSlug)
                 .map(project -> {
@@ -118,12 +110,11 @@ public class ProjectService {
     }
 
     public Project getProjectBySlug(String projectSlug, Authentication authentication) {
-        Integer userId = userRepository.findUserIdByUsername(authentication.getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
 
-        if(!permissionService.hasAnyPermission(projectSlug, userId)){
+        if (!permissionService.hasAnyPermission(projectSlug, authentication)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "you not have any permissions");
-        };
+        }
+        ;
 
         return projectRepository.findProjectBySlug(projectSlug)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found"));

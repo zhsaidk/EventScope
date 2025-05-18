@@ -11,6 +11,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -26,22 +27,22 @@ public class PermissionService {
 
 
     @Transactional
-    public void grantPermission(String projectSlug, Integer userId, PermissionRole role, Integer ownerId){
+    public void grantPermission(String projectSlug, Integer userId, PermissionRole role, Authentication authentication){
+        UserDetailsImpl owner = (UserDetailsImpl) authentication.getPrincipal();
+
         Project project = projectRepository.findProjectBySlug(projectSlug)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found"));
 
-        if (!permissionRepository.existsByProjectSlugAndUserIdAndPermission(projectSlug, ownerId, PermissionRole.OWNER)){
+        if (!permissionRepository.existsByProjectSlugAndUserIdAndPermission(projectSlug, owner.getId(), PermissionRole.OWNER)){
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the project owner can grant permissions");
         }
 
         if (role == PermissionRole.OWNER){
-            revokePermission(projectSlug, ownerId, ownerId);
+            revokePermission(projectSlug, owner.getId(), owner.getId());
         }
-
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-
 
         ProjectPermission projectPermission = ProjectPermission.builder()
                 .user(user)
@@ -64,12 +65,14 @@ public class PermissionService {
         permissionRepository.delete(permission);
     }
 
-    public boolean hasPermission(String projectSlug, Integer userId, List<PermissionRole> role){
-        return permissionRepository.existsByProjectSlugAndUserIdAndPermissionIn(projectSlug, userId, role);
+    public boolean hasPermission(String projectSlug, Authentication authentication, List<PermissionRole> role){
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        return permissionRepository.existsByProjectSlugAndUserIdAndPermissionIn(projectSlug, userDetails.getId(), role);
     }
 
-    public boolean hasAnyPermission(String projectSlug, Integer userId){
-        return permissionRepository.existsByProjectSlugAndUserIdAndPermissionIn(projectSlug, userId, List.of(PermissionRole.OWNER, PermissionRole.WRITER, PermissionRole.READ));
+    public boolean hasAnyPermission(String projectSlug, Authentication authentication){
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        return permissionRepository.existsByProjectSlugAndUserIdAndPermissionIn(projectSlug, userDetails.getId(), List.of(PermissionRole.OWNER, PermissionRole.WRITER, PermissionRole.READ));
     }
 
     public void save(ProjectPermission projectPermission){

@@ -12,12 +12,14 @@ import com.zhsaidk.service.EventService;
 import com.zhsaidk.service.ProjectService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
@@ -125,7 +127,6 @@ public class ProjectRestController {
         if (!catalogRepository.existsBySlugAndProjectSlug(catalogSlug, projectSlug)) {
             return ResponseEntity.badRequest().build();
         }
-        ;
 
         return catalogService.remove(projectSlug, catalogSlug, authentication)
                 ? ResponseEntity.noContent().build()
@@ -190,5 +191,15 @@ public class ProjectRestController {
                                                           @RequestParam(name = "size", defaultValue = "10") Integer size,
                                                           Authentication authentication) {
         return eventService.findByParameters(name, begin, end, page, size, authentication);
+    }
+
+    @GetMapping("/projects/catalogs/events/{catalogSlug}")          //TODO Для тестирование метода (Можно удалить)
+    public ResponseEntity<Page<Event>> getEventsWithCatalogSlug(@PathVariable("catalogSlug") String catalogSlug,
+                                                                @RequestParam(name = "page", defaultValue = "0") Integer page,
+                                                                @RequestParam(name = "size", defaultValue = "10") Integer size,
+                                                                Authentication authentication) {
+
+
+        return ResponseEntity.ok(eventService.findAllEventsByCatalogSlug(catalogSlug, authentication, page, size));
     }
 }

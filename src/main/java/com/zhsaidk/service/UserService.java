@@ -21,7 +21,7 @@ import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
-public class UserService implements UserDetailsService {
+public class UserService {
     private final UserRepository userRepository;
     private final UserReadMapper readMapper;
 
@@ -41,16 +41,5 @@ public class UserService implements UserDetailsService {
         return userRepository.findAll()
                 .stream().map(readMapper::map)
                 .toList();
-    }
-
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User currentUser = userRepository.findUserByUsername(username)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        return new org.springframework.security.core.userdetails.User(
-                currentUser.getUsername(),
-                currentUser.getPassword(),
-                Set.of(currentUser.getRole())
-        );
     }
 }

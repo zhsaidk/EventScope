@@ -18,7 +18,7 @@ import java.util.UUID;
 public interface EventRepository extends JpaRepository<Event, UUID>, JpaSpecificationExecutor<Event> {
 
     @Query("select e from Event e where e.catalog.slug =:catalogSlug")
-    List<Event> findAllEventsByCatalogSlug(String catalogSlug);
+    Page<Event> findAllEventsByCatalogSlug(String catalogSlug, Pageable pageable);
 
     @EntityGraph(attributePaths = {"catalog", "catalog.project", "catalog.project.permissions"})
     Page<Event> findAll(Specification<Event> specification, Pageable pageable);

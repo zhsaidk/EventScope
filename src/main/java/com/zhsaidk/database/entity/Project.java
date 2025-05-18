@@ -31,6 +31,7 @@ public class Project {
     private Boolean active;
 
     @ToString.Exclude
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id")
     User owner;

@@ -26,5 +26,10 @@ INSERT INTO users(name, username, password, role) VALUES
 
 --changeset zhavokhir:1.7.4
 INSERT INTO api_keys(key_hash, description, created_at, expires_at, is_active, user_id)
-VALUES ('3uE9j1Vf9TBLMCwyrWtrs3tMGBXwQTbE2DV4w', 'Дано для доступа к эндпоинтам', '2025-04-11 18:25:52.786146', '2026-04-11 18:25:52.734933', true, 1);
+VALUES ('3uE9j1Vf9TBLMCwyrWtrs3tMGBXwQTbE2DV4w', 'Дано для доступа к эндпоинтам для пользователя Admin', '2025-04-11 18:25:52.786146', '2026-04-11 18:25:52.734933', true, 2);
 --rollback delete from api_keys where key_hash = '3uE9j1Vf9TBLMCwyrWtrs3tMGBXwQTbE2DV4w'
+
+--changeset zhavokhir:1.7.5
+INSERT INTO api_keys(key_hash, description, created_at, expires_at, is_active, user_id)
+VALUES ('x7b9z3k8m2p5q9r4t6w1y0n3j8h5f2v', 'Дано для доступа к эндпоинтам для пользователя Test', '2025-04-11 18:25:52.786146', '2026-04-11 18:25:52.734933', true, 3);
+--rollback delete from api_keys where key_hash = 'x7b9z3k8m2p5q9r4t6w1y0n3j8h5f2v'

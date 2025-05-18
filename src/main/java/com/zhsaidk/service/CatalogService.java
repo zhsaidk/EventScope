@@ -41,7 +41,7 @@ public class CatalogService {
         return new PagedModel<>(catalogRepository.findAllByUserIdAndAnyRole(pageRequest, userId));
     }
 
-    public Page<Catalog> findAllCatalogs(PageRequest pageRequest, Authentication authentication){
+    public Page<Catalog> findAllCatalogs(PageRequest pageRequest, Authentication authentication) {
         Integer userId = userRepository.findUserIdByUsername(authentication.getName())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
 
@@ -50,14 +50,11 @@ public class CatalogService {
 
     public ResponseEntity<?> findById(String projectSlug, String catalogSlug, Authentication authentication) {
 
-        Integer userId = userRepository.findUserIdByUsername(authentication.getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
-
-        if (!permissionService.hasAnyPermission(projectSlug, userId)){
+        if (!permissionService.hasAnyPermission(projectSlug, authentication)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
-        if(!catalogRepository.existsBySlugAndProjectSlug(catalogSlug, projectSlug)){
+        if (!catalogRepository.existsBySlugAndProjectSlug(catalogSlug, projectSlug)) {
             return ResponseEntity.badRequest().build();
         }
 
@@ -68,15 +65,12 @@ public class CatalogService {
 
     public ResponseEntity<?> build(BuildCreateCatalogDto dto, String projectSlug, Authentication authentication) {
 
-        Integer userId = userRepository.findUserIdByUsername(authentication.getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
-
-        if (!permissionService.hasPermission(projectSlug, userId, List.of(PermissionRole.OWNER, PermissionRole.WRITER))){
+        if (!permissionService.hasPermission(projectSlug, authentication, List.of(PermissionRole.OWNER, PermissionRole.WRITER))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
         Project project = projectRepository.findProjectBySlug(projectSlug)
-                .orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found"));
 
         Catalog savedCatalog = catalogRepository.save(Catalog.builder()
                 .name(dto.getName())
@@ -92,18 +86,15 @@ public class CatalogService {
     @Transactional
     public ResponseEntity<?> update(String projectSlug, String catalogSlug, BuildReadCatalogDto dto, Authentication authentication) {
 
-        Integer userId = userRepository.findUserIdByUsername(authentication.getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
-
-        if (!permissionService.hasPermission(projectSlug, userId, List.of(PermissionRole.OWNER, PermissionRole.WRITER))){
+        if (!permissionService.hasPermission(projectSlug, authentication, List.of(PermissionRole.OWNER, PermissionRole.WRITER))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only owner or writer can change");
         }
 
-        if(!catalogRepository.existsBySlugAndProjectSlug(catalogSlug, projectSlug)){
+        if (!catalogRepository.existsBySlugAndProjectSlug(catalogSlug, projectSlug)) {
             return ResponseEntity.badRequest().build();
         }
         Project project = projectRepository.findProjectBySlug(projectSlug)
-                .orElse(null);
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "project not found"));
 
         return catalogRepository.findCatalogBySlug(catalogSlug)
                 .map(current -> {
@@ -122,10 +113,7 @@ public class CatalogService {
     @Transactional
     public Boolean remove(String projectSlug, String catalogSlug, Authentication authentication) {
 
-        Integer userId = userRepository.findUserIdByUsername(authentication.getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
-
-        if (!permissionService.hasPermission(projectSlug, userId, List.of(PermissionRole.OWNER, PermissionRole.WRITER))){
+        if (!permissionService.hasPermission(projectSlug, authentication, List.of(PermissionRole.OWNER, PermissionRole.WRITER))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only project owner or writer can delete");
         }
 
@@ -136,19 +124,17 @@ public class CatalogService {
         return false;
     }
 
-    public List<Catalog> findAllCatalogsByProjectSlug(String projectSlug, Authentication authentication){
-        Integer userId = userRepository.findUserIdByUsername(authentication.getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
+    public List<Catalog> findAllCatalogsByProjectSlug(String projectSlug, Authentication authentication) {
 
-        if (!permissionService.hasAnyPermission(projectSlug, userId)){
+        if (!permissionService.hasAnyPermission(projectSlug, authentication)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
         return catalogRepository.findAllCatalogsByProjectSlug(projectSlug);
     }
 
-    public Catalog findCatalogByCatalogSlug(String catalogSlug){
+    public Catalog findCatalogByCatalogSlug(String catalogSlug) {
         return catalogRepository.findCatalogBySlug(catalogSlug)
-                .orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND, "catalog not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "catalog not found"));
     }
 }

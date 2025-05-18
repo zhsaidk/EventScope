@@ -37,10 +37,8 @@ public class EventService {
     private final PermissionService permissionService;
 
     public ResponseEntity<?> build(BuildEventDto dto, String projectSlug, String catalogSlug, Authentication authentication) {
-        Integer userId = userRepository.findUserIdByUsername(authentication.getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
 
-        if (!permissionService.hasPermission(projectSlug, userId, List.of(PermissionRole.OWNER, PermissionRole.WRITER))){
+        if (!permissionService.hasPermission(projectSlug, authentication, List.of(PermissionRole.OWNER, PermissionRole.WRITER))){
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "you have not permission");
         }
 
@@ -70,10 +68,7 @@ public class EventService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Каталог не относится к проекту");
         }
 
-        Integer userId = userRepository.findUserIdByUsername(authentication.getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
-
-        if (!permissionService.hasPermission(projectSlug, userId, List.of(PermissionRole.OWNER, PermissionRole.WRITER))){
+        if (!permissionService.hasPermission(projectSlug, authentication, List.of(PermissionRole.OWNER, PermissionRole.WRITER))){
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
@@ -85,14 +80,12 @@ public class EventService {
     }
 
     public ResponseEntity<?> getById(UUID id, String projectSlug, String catalogSlug, Authentication authentication) {
-        Integer userId = userRepository.findUserIdByUsername(authentication.getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
 
         if (!catalogRepository.existsBySlugAndProjectSlug(catalogSlug, projectSlug)) {
             return ResponseEntity.badRequest().build();
         }
 
-        if (!permissionService.hasAnyPermission(projectSlug, userId)){
+        if (!permissionService.hasAnyPermission(projectSlug, authentication)){
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
@@ -103,10 +96,7 @@ public class EventService {
 
     public ResponseEntity<?> update(UUID id, BuildCreateEventDto dto, String projectSlug, String catalogSlug, Authentication authentication) {
 
-        Integer userId = userRepository.findUserIdByUsername(authentication.getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
-
-        if (!permissionService.hasPermission(projectSlug, userId, List.of(PermissionRole.OWNER, PermissionRole.WRITER))){
+        if (!permissionService.hasPermission(projectSlug, authentication, List.of(PermissionRole.OWNER, PermissionRole.WRITER))){
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
@@ -137,19 +127,16 @@ public class EventService {
         return eventRepository.findAll(EventSpecification.byCriteria(text, begin, end, userId), pageRequest);
     }
 
-    public List<Event> findAllEventsByCatalogSlug(String catalogSlug, Authentication authentication){
-        Integer userId = userRepository.findUserIdByUsername(authentication.getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
+    public Page<Event> findAllEventsByCatalogSlug(String catalogSlug, Authentication authentication, Integer page, Integer size){
 
         Catalog catalog = catalogRepository.findCatalogBySlugWithProject(catalogSlug)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Catalog not found"));
 
-        if (!permissionService.hasAnyPermission(catalog.getProject().getSlug(), userId)){
+        if (!permissionService.hasAnyPermission(catalog.getProject().getSlug(), authentication)){
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "you have not any permission");
         }
 
-
-        return eventRepository.findAllEventsByCatalogSlug(catalogSlug);
+        return eventRepository.findAllEventsByCatalogSlug(catalogSlug, PageRequest.of(page, size));
     }
 
     @Transactional
@@ -158,10 +145,7 @@ public class EventService {
             throw new IllegalArgumentException("Каталог не относится к проекту");
         }
 
-        Integer userId = userRepository.findUserIdByUsername(authentication.getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
-
-        if (!permissionService.hasPermission(projectSlug, userId, List.of(PermissionRole.OWNER, PermissionRole.WRITER))){
+        if (!permissionService.hasPermission(projectSlug, authentication, List.of(PermissionRole.OWNER, PermissionRole.WRITER))){
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "you have not permission");
         }
 

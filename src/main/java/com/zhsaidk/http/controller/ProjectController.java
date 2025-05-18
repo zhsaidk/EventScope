@@ -108,10 +108,8 @@ public class ProjectController {
                         @RequestParam("toUserId") Integer toUserId,
                         @RequestParam("role") PermissionRole role,
                         Authentication authentication) {
-        Integer ownerId = userRepository.findUserIdByUsername(authentication.getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
 
-        permissionService.grantPermission(projectSlug, toUserId, role, ownerId);
+        permissionService.grantPermission(projectSlug, toUserId, role, authentication);
 
         return "redirect:/projects";
     }
@@ -192,10 +190,8 @@ public class ProjectController {
     public String getCatalogWithProjectSlug(@PathVariable("projectSlug") String projectSlug,
                                             Authentication authentication,
                                             Model model) {
-        Integer userId = userRepository.findUserIdByUsername(authentication.getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
 
-        if (!permissionService.hasAnyPermission(projectSlug, userId)) {
+        if (!permissionService.hasAnyPermission(projectSlug, authentication)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "you have not any permission");
         }
 
@@ -267,10 +263,12 @@ public class ProjectController {
     @GetMapping("/projects/catalogs/events/{catalogSlug}")
     public String getEventsWithCatalogSlug(@PathVariable("catalogSlug") String catalogSlug,
                                            Model model,
-                                           Authentication authentication) {
+                                           Authentication authentication,
+                                           @RequestParam(name = "page", defaultValue = "0") Integer page,
+                                           @RequestParam(name = "size", defaultValue = "10") Integer size) {
 
 
-        model.addAttribute("events", eventService.findAllEventsByCatalogSlug(catalogSlug, authentication));
+        model.addAttribute("events", eventService.findAllEventsByCatalogSlug(catalogSlug, authentication, page, size));
         return "event/eventsWithCatalogSlug";
     }
 
