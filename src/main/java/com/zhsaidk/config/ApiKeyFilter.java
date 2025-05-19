@@ -1,8 +1,10 @@
 package com.zhsaidk.config;
 
 import com.zhsaidk.database.entity.ApiKey;
+import com.zhsaidk.database.entity.Role;
 import com.zhsaidk.database.entity.User;
 import com.zhsaidk.database.repo.ApiKeyRepository;
+import com.zhsaidk.service.UserDetailsImpl;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -18,6 +20,8 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.Set;
+
 import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
@@ -78,13 +82,17 @@ public class ApiKeyFilter extends OncePerRequestFilter {
             sendError(response, "No user associated with API Key");
             return;
         }
-
-        String role = user.getRole().name();
-        var authority = new SimpleGrantedAuthority(role);
-        var authentication = new UsernamePasswordAuthenticationToken(
+        Role role = user.getRole();
+        UserDetailsImpl userDetails = new UserDetailsImpl(
+                user.getId(),
+                user.getName(),
                 user.getUsername(),
+                user.getPassword(),
+                Set.of(user.getRole()));
+        var authentication = new UsernamePasswordAuthenticationToken(
+                userDetails,
                 null,
-                Collections.singletonList(authority)
+                Collections.singletonList(role)
         );
         authentication.setDetails(user);
         SecurityContextHolder.getContext().setAuthentication(authentication);

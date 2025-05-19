@@ -20,6 +20,7 @@ import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -113,10 +114,9 @@ public class EventService {
     }
 //TODO нужно разобратся чтобы каждый пользователь видел свои Евенты
     public ResponseEntity<PagedModel<Event>> findByParameters(String text, LocalDateTime begin, LocalDateTime end, Integer pageNumber, Integer size, Authentication authentication) {
-        Integer userId = userRepository.findUserIdByUsername(authentication.getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
 
-        Page<Event> page = eventRepository.findAll(EventSpecification.byCriteria(text, begin, end, userId), PageRequest.of(pageNumber, size, Sort.by("localCreatedAt")));
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        Page<Event> page = eventRepository.findAll(EventSpecification.byCriteria(text, begin, end, userDetails.getId()), PageRequest.of(pageNumber, size, Sort.by("localCreatedAt")));
         return ResponseEntity.ok(new PagedModel<>(page));
     }
 
