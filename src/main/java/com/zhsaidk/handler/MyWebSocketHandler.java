@@ -23,8 +23,6 @@ import java.util.Objects;
 public class    MyWebSocketHandler extends TextWebSocketHandler {
     private final ObjectMapper objectMapper;
     private final EventService eventService;
-    private final ProjectService projectService;
-    private final CatalogService catalogService;
     private Authentication authentication;
 
     @Override

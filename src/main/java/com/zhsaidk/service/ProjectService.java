@@ -3,6 +3,7 @@ package com.zhsaidk.service;
 import com.zhsaidk.database.entity.*;
 import com.zhsaidk.database.repo.ApiKeyRepository;
 import com.zhsaidk.database.repo.ProjectRepository;
+import com.zhsaidk.database.repo.ProjectSpecification;
 import com.zhsaidk.database.repo.UserRepository;
 import com.zhsaidk.dto.BuildProjectDTO;
 import com.zhsaidk.util.SlugUtil;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +37,7 @@ public class ProjectService {
 
     public PagedModel<Project> getAll(PageRequest pageRequest, Authentication authentication) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        return new PagedModel<>(projectRepository.findAllByUserIdAndAnyRole(pageRequest, userDetails.getId()));
+        return new PagedModel<>(projectRepository.findAll(ProjectSpecification.getAllProjects(userDetails.getId()), pageRequest));
     }
 
     public Page<Project> getAllProjects(PageRequest pageRequest, Authentication authentication) {
@@ -43,19 +45,15 @@ public class ProjectService {
         return projectRepository.findAllByUserIdAndAnyRole(pageRequest, userDetails.getId());
     }
 
-    public ResponseEntity<?> getByProjectSlug(String projectSlug, Authentication authentication) {
+    public Project getProjectByProjectSlug(String projectSlug, Authentication authentication) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
-        if (!permissionService.hasAnyPermission(projectSlug, authentication)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("you dont have permission");
-        }
-
-        return projectRepository.findProjectBySlug(projectSlug)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+        return projectRepository.findOne(ProjectSpecification.getProjectByProjectSlug(projectSlug, userDetails.getId()))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
     @Transactional
-    public ResponseEntity<Project> build(BuildProjectDTO dto, Authentication authentication) {
+    public Project build(BuildProjectDTO dto, Authentication authentication) {
         User user = userRepository.findUserByUsername(authentication.getName())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
@@ -73,10 +71,10 @@ public class ProjectService {
                 .build();
         permissionService.save(permission);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedProject);
+        return savedProject;
     }
 
-    public ResponseEntity<?> modify(String projectSlug,
+    public Project modify(String projectSlug,
                                     BuildProjectDTO dto,
                                     Authentication authentication) {
         if (!permissionService.hasPermission(projectSlug, authentication, List.of(PermissionRole.OWNER, PermissionRole.WRITER))) {
@@ -90,8 +88,8 @@ public class ProjectService {
                     project.setActive(dto.getActive());
                     project.setSlug(project.getSlug());
                     projectRepository.save(project);
-                    return ResponseEntity.status(HttpStatus.ACCEPTED).body(project);
-                }).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+                    return project;
+                }).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_MODIFIED));
     }
 
     @Transactional
@@ -107,20 +105,5 @@ public class ProjectService {
                     return true;
                 })
                 .orElse(false);
-    }
-
-    public Project getProjectBySlug(String projectSlug, Authentication authentication) {
-
-        if (!permissionService.hasAnyPermission(projectSlug, authentication)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "you not have any permissions");
-        }
-        ;
-
-        return projectRepository.findProjectBySlug(projectSlug)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found"));
-    }
-
-    public void save(Project project) {
-        projectRepository.save(project);
     }
 }

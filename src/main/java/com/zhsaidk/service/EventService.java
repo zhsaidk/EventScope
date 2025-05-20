@@ -81,18 +81,11 @@ public class EventService {
     }
 
     public ResponseEntity<?> getById(UUID id, String projectSlug, String catalogSlug, Authentication authentication) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
-        if (!catalogRepository.existsBySlugAndProjectSlug(catalogSlug, projectSlug)) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        if (!permissionService.hasAnyPermission(projectSlug, authentication)){
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-        }
-
-        return eventRepository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+        Event currentEvent = eventRepository.findOne(EventSpecification.findById(id, projectSlug, catalogSlug, userDetails.getId()))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        return ResponseEntity.ok(currentEvent);
     }
 
     public ResponseEntity<?> update(UUID id, BuildCreateEventDto dto, String projectSlug, String catalogSlug, Authentication authentication) {
@@ -127,6 +120,7 @@ public class EventService {
         return eventRepository.findAll(EventSpecification.byCriteria(text, begin, end, userId), pageRequest);
     }
 
+    //TODO Нужно реализовать Pageable до конца для MVC
     public Page<Event> findAllEventsByCatalogSlug(String catalogSlug, Authentication authentication, Integer page, Integer size){
 
         Catalog catalog = catalogRepository.findCatalogBySlugWithProject(catalogSlug)

@@ -5,6 +5,7 @@ import com.zhsaidk.database.entity.PermissionRole;
 import com.zhsaidk.database.entity.Project;
 import com.zhsaidk.database.entity.ProjectPermission;
 import com.zhsaidk.database.repo.CatalogRepository;
+import com.zhsaidk.database.repo.CatalogSpecification;
 import com.zhsaidk.database.repo.ProjectRepository;
 import com.zhsaidk.database.repo.UserRepository;
 import com.zhsaidk.dto.BuildCreateCatalogDto;
@@ -32,34 +33,22 @@ public class CatalogService {
     private final CatalogRepository catalogRepository;
     private final ProjectRepository projectRepository;
     private final PermissionService permissionService;
-    private final UserRepository userRepository;
 
     public PagedModel<Catalog> findAll(PageRequest pageRequest, Authentication authentication) {
-        Integer userId = userRepository.findUserIdByUsername(authentication.getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
-
-        return new PagedModel<>(catalogRepository.findAllByUserIdAndAnyRole(pageRequest, userId));
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        return new PagedModel<>(catalogRepository.findAll(CatalogSpecification.getAll(userDetails.getId()), pageRequest));
     }
 
     public Page<Catalog> findAllCatalogs(PageRequest pageRequest, Authentication authentication) {
-        Integer userId = userRepository.findUserIdByUsername(authentication.getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
-
-        return catalogRepository.findAllByUserIdAndAnyRole(pageRequest, userId);
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        return catalogRepository.findAll(CatalogSpecification.getAll(userDetails.getId()), pageRequest);
     }
 
     public ResponseEntity<?> findById(String projectSlug, String catalogSlug, Authentication authentication) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
-        if (!permissionService.hasAnyPermission(projectSlug, authentication)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-        }
-
-        if (!catalogRepository.existsBySlugAndProjectSlug(catalogSlug, projectSlug)) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        Catalog catalog = catalogRepository.findCatalogBySlug(catalogSlug)
-                .orElse(null);
+        Catalog catalog = catalogRepository.findOne(CatalogSpecification.findCatalogByCatalogSlug(projectSlug, catalogSlug, userDetails.getId()))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         return ResponseEntity.ok(catalog);
     }
 

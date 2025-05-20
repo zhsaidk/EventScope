@@ -46,7 +46,7 @@ public class ProjectRestController {
     @GetMapping("/{projectSlug}")
     public ResponseEntity<?> getProjectById(@PathVariable("projectSlug") String projectSlug,
                                             Authentication authentication) {
-        return projectService.getByProjectSlug(projectSlug, authentication);
+        return ResponseEntity.ok(projectService.getProjectByProjectSlug(projectSlug, authentication));
     }
 
     @PostMapping("/projects")
@@ -56,7 +56,7 @@ public class ProjectRestController {
         if (bindingResult.hasErrors()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(bindingResult.getAllErrors());
         }
-        return projectService.build(dto, authentication);
+        return ResponseEntity.status(HttpStatus.CREATED).body(projectService.build(dto, authentication));
     }
 
     @PutMapping("/{projectSlug}")
@@ -67,7 +67,7 @@ public class ProjectRestController {
         if (bindingResult.hasErrors()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(bindingResult.getAllErrors());
         }
-        return projectService.modify(projectSlug, dto, authentication);
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(projectService.modify(projectSlug, dto, authentication));
     }
 
     @DeleteMapping("/{projectSlug}")
@@ -193,13 +193,13 @@ public class ProjectRestController {
         return eventService.findByParameters(name, begin, end, page, size, authentication);
     }
 
-    @GetMapping("/projects/catalogs/events/{catalogSlug}")          //TODO Для тестирование метода (Можно удалить)
-    public ResponseEntity<Page<Event>> getEventsWithCatalogSlug(@PathVariable("catalogSlug") String catalogSlug,
-                                                                @RequestParam(name = "page", defaultValue = "0") Integer page,
-                                                                @RequestParam(name = "size", defaultValue = "10") Integer size,
-                                                                Authentication authentication) {
-
-
-        return ResponseEntity.ok(eventService.findAllEventsByCatalogSlug(catalogSlug, authentication, page, size));
-    }
+//    @GetMapping("/projects/catalogs/events/{catalogSlug}")          //TODO Для тестирование метода (Можно удалить)
+//    public ResponseEntity<Page<Event>> getEventsWithCatalogSlug(@PathVariable("catalogSlug") String catalogSlug,
+//                                                                @RequestParam(name = "page", defaultValue = "0") Integer page,
+//                                                                @RequestParam(name = "size", defaultValue = "10") Integer size,
+//                                                                Authentication authentication) {
+//
+//
+//        return ResponseEntity.ok(eventService.findAllEventsByCatalogSlug(catalogSlug, authentication, page, size));
+//    }
 }

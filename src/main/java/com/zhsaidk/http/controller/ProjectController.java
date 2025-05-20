@@ -84,7 +84,7 @@ public class ProjectController {
     public String getProjectPage(Model model,
                                  @PathVariable("projectSlug") String projectSlug,
                                  Authentication authentication) {
-        model.addAttribute("project", projectService.getProjectBySlug(projectSlug, authentication));
+        model.addAttribute("project", projectService.getProjectByProjectSlug(projectSlug, authentication));
         model.addAttribute("users", userService.findAllUsersAsDto());
         return "project/project";
     }
