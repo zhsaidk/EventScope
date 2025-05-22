@@ -39,12 +39,7 @@ public class    MyWebSocketHandler extends TextWebSocketHandler {
         String catalogSlug = pathParts[4];
 
         BuildEventDto eventDto = objectMapper.readValue(message.getPayload(), BuildEventDto.class);
-
-        // Вызываем метод build для создания события
         Object result = eventService.build(eventDto, projectSlug, catalogSlug, authentication);
-
-        // Отправляем результат клиенту
         session.sendMessage(new TextMessage(objectMapper.writeValueAsString(result)));
     }
-
 }

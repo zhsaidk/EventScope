@@ -105,7 +105,7 @@ public class EventService {
                 })
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
-//TODO нужно разобратся чтобы каждый пользователь видел свои Евенты
+
     public ResponseEntity<PagedModel<Event>> findByParameters(String text, LocalDateTime begin, LocalDateTime end, Integer pageNumber, Integer size, Authentication authentication) {
 
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();

@@ -96,7 +96,6 @@ public class ApiKeyFilter extends OncePerRequestFilter {
         );
         authentication.setDetails(user);
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        System.out.println("Authenticated " + user.getUsername() + " as " + role);
 
         filterChain.doFilter(request, response);
     }

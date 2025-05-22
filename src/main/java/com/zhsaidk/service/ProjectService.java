@@ -31,7 +31,6 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ProjectService {
     private final ProjectRepository projectRepository;
-    private final ApiKeyRepository apiKeyRepository;
     private final UserRepository userRepository;
     private final PermissionService permissionService;
 
@@ -57,26 +56,25 @@ public class ProjectService {
         User user = userRepository.findUserByUsername(authentication.getName())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
-        Project savedProject = projectRepository.save(Project.builder()
+        Project project = Project.builder()
                 .name(dto.getName())
                 .description(dto.getDescription())
                 .owner(user)
                 .active(dto.getActive())
-                .build());
+                .build();
 
         ProjectPermission permission = ProjectPermission.builder()
                 .user(user)
-                .project(savedProject)
                 .permission(PermissionRole.OWNER)
                 .build();
-        permissionService.save(permission);
 
-        return savedProject;
+        project.addPermission(permission);
+        return projectRepository.save(project);
     }
 
     public Project modify(String projectSlug,
-                                    BuildProjectDTO dto,
-                                    Authentication authentication) {
+                          BuildProjectDTO dto,
+                          Authentication authentication) {
         if (!permissionService.hasPermission(projectSlug, authentication, List.of(PermissionRole.OWNER, PermissionRole.WRITER))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "you have not permission");
         }
@@ -89,7 +87,7 @@ public class ProjectService {
                     project.setSlug(project.getSlug());
                     projectRepository.save(project);
                     return project;
-                }).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_MODIFIED));
+                }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_MODIFIED));
     }
 
     @Transactional
@@ -97,7 +95,6 @@ public class ProjectService {
         if (!permissionService.hasPermission(projectSlug, authentication, List.of(PermissionRole.OWNER))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only owner can delete");
         }
-        ;
 
         return projectRepository.findProjectBySlug(projectSlug)
                 .map(project -> {

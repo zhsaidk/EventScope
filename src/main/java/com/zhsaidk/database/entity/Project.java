@@ -42,6 +42,12 @@ public class Project {
 
     @JsonIgnore
     @ToString.Exclude
+    @Builder.Default
     @OneToMany(mappedBy = "project", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProjectPermission> permissions = new ArrayList<>();
+
+    public void addPermission(ProjectPermission permission){
+        permissions.add(permission);
+        permission.setProject(this);
+    }
 }

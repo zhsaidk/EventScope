@@ -24,7 +24,6 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -50,28 +49,20 @@ public class ProjectRestController {
     }
 
     @PostMapping("/projects")
-    public ResponseEntity<?> buildProject(@Valid @RequestBody BuildProjectDTO dto,
-                                          Authentication authentication,
-                                          BindingResult bindingResult) {
-        if (bindingResult.hasErrors()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(bindingResult.getAllErrors());
-        }
+    public ResponseEntity<?> createProject(@Valid @RequestBody BuildProjectDTO dto,
+                                          Authentication authentication) {
         return ResponseEntity.status(HttpStatus.CREATED).body(projectService.build(dto, authentication));
     }
 
     @PutMapping("/{projectSlug}")
-    public ResponseEntity<?> modifyProject(@PathVariable("projectSlug") String projectSlug,
+    public ResponseEntity<?> updateProject(@PathVariable("projectSlug") String projectSlug,
                                            @Valid @RequestBody BuildProjectDTO dto,
-                                           BindingResult bindingResult,
                                            Authentication authentication) {
-        if (bindingResult.hasErrors()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(bindingResult.getAllErrors());
-        }
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(projectService.modify(projectSlug, dto, authentication));
     }
 
     @DeleteMapping("/{projectSlug}")
-    public ResponseEntity<?> removeProject(@PathVariable("projectSlug") String projectSlug,
+    public ResponseEntity<?> deleteProject(@PathVariable("projectSlug") String projectSlug,
                                            Authentication authentication) {
         return projectService.remove(projectSlug, authentication)
                 ? ResponseEntity.noContent().build()
@@ -97,36 +88,24 @@ public class ProjectRestController {
     }
 
     @PostMapping("/{projectSlug}/catalogs")
-    public ResponseEntity<?> buildCatalog(@Valid @RequestBody BuildCreateCatalogDto dto,
-                                          BindingResult bindingResult,
+    public ResponseEntity<?> createCatalog(@Valid @RequestBody BuildCreateCatalogDto dto,
                                           @PathVariable("projectSlug") String projectSlug,
                                           Authentication authentication) {
-        if (bindingResult.hasErrors()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(bindingResult.getAllErrors());
-        }
-
         return catalogService.build(dto, projectSlug, authentication);
     }
 
     @PutMapping("/{projectSlug}/{catalogSlug}")
-    public ResponseEntity<?> update(@PathVariable("projectSlug") String projectSlug,
+    public ResponseEntity<?> updateCatalog(@PathVariable("projectSlug") String projectSlug,
                                     @PathVariable("catalogSlug") String catalogSlug,
                                     @Valid @RequestBody BuildReadCatalogDto dto,
-                                    BindingResult bindingResult,
                                     Authentication authentication) {
-        if (bindingResult.hasErrors()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(bindingResult.getAllErrors());
-        }
         return catalogService.update(projectSlug, catalogSlug, dto, authentication);
     }
 
     @DeleteMapping("/{projectSlug}/{catalogSlug}")  //todo
-    public ResponseEntity<?> removeCatalog(@PathVariable("projectSlug") String projectSlug,
+    public ResponseEntity<?> deleteCatalog(@PathVariable("projectSlug") String projectSlug,
                                            @PathVariable("catalogSlug") String catalogSlug,
                                            Authentication authentication) {
-        if (!catalogRepository.existsBySlugAndProjectSlug(catalogSlug, projectSlug)) {
-            return ResponseEntity.badRequest().build();
-        }
 
         return catalogService.remove(projectSlug, catalogSlug, authentication)
                 ? ResponseEntity.noContent().build()
@@ -137,19 +116,15 @@ public class ProjectRestController {
     //TODO ---------------------Для Events--------------------------
 
     @PostMapping("/{projectSlug}/{catalogSlug}/events")
-    public ResponseEntity<?> builtEvent(@Valid @RequestBody BuildEventDto dto,
-                                        BindingResult bindingResult,
+    public ResponseEntity<?> createEvent(@Valid @RequestBody BuildEventDto dto,
                                         @PathVariable(value = "projectSlug") String projectSlug,
                                         @PathVariable(value = "catalogSlug") String catalogSlug,
                                         Authentication authentication) {
-        if (bindingResult.hasErrors()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
         return eventService.build(dto, projectSlug, catalogSlug, authentication);
     }
 
     @DeleteMapping("/{projectSlug}/{catalogSlug}/{eventId}")
-    public ResponseEntity<?> removeEvent(@PathVariable("projectSlug") String projectSlug,
+    public ResponseEntity<?> deleteEvent(@PathVariable("projectSlug") String projectSlug,
                                          @PathVariable("catalogSlug") String catalogSlug,
                                          @PathVariable("eventId") UUID eventId,
                                          Authentication authentication) {
@@ -164,22 +139,15 @@ public class ProjectRestController {
                                           @PathVariable("catalogSlug") String catalogSlug,
                                           @PathVariable("eventId") UUID eventId,
                                           Authentication authentication) {
-        if (!catalogRepository.existsBySlugAndProjectSlug(catalogSlug, projectSlug)) {
-            return ResponseEntity.badRequest().build();
-        }
         return eventService.getById(eventId, projectSlug, catalogSlug, authentication);
     }
 
     @PutMapping("/{projectSlug}/{catalogSlug}/{eventId}") //todo
     public ResponseEntity<?> updateEvent(@PathVariable("eventId") UUID eventId,
                                          @Valid @RequestBody BuildCreateEventDto dto,
-                                         BindingResult bindingResult,
                                          @PathVariable(value = "projectSlug") String projectSlug,
                                          @PathVariable(value = "catalogSlug") String catalogSlug,
                                          Authentication authentication) {
-        if (bindingResult.hasErrors()) {
-            return ResponseEntity.badRequest().body(bindingResult.getAllErrors());
-        }
         return eventService.update(eventId, dto, projectSlug, catalogSlug, authentication);
     }
 

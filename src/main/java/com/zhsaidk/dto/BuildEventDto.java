@@ -1,6 +1,7 @@
 package com.zhsaidk.dto;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Value;
 
@@ -9,7 +10,7 @@ import java.time.LocalDateTime;
 
 @Value
 public class BuildEventDto {
-    @NotNull(message = "Field name must be not null")
+    @NotBlank(message = "Field name must be not null")
     String name;
 
     @NotNull(message = "Field parameters must be not null")

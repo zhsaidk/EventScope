@@ -63,7 +63,7 @@ public class ProjectController {
 
     @GetMapping("/projects/build")
     public String getProjectCreate(Model model) {
-        model.addAttribute("project", new BuildProjectDTO());
+        model.addAttribute("project", new BuildProjectDTO(null, null, null));
         return "project/build";
     }
 

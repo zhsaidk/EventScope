@@ -37,7 +37,7 @@ public class CatalogService {
     public PagedModel<Catalog> findAll(PageRequest pageRequest, Authentication authentication) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         return new PagedModel<>(catalogRepository.findAll(CatalogSpecification.getAll(userDetails.getId()), pageRequest));
-    }
+    } //TODO Нужно обеденить первый и второй метод методов
 
     public Page<Catalog> findAllCatalogs(PageRequest pageRequest, Authentication authentication) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
@@ -52,6 +52,7 @@ public class CatalogService {
         return ResponseEntity.ok(catalog);
     }
 
+    @Transactional
     public ResponseEntity<?> build(BuildCreateCatalogDto dto, String projectSlug, Authentication authentication) {
 
         if (!permissionService.hasPermission(projectSlug, authentication, List.of(PermissionRole.OWNER, PermissionRole.WRITER))) {
@@ -75,13 +76,14 @@ public class CatalogService {
     @Transactional
     public ResponseEntity<?> update(String projectSlug, String catalogSlug, BuildReadCatalogDto dto, Authentication authentication) {
 
+        if (!catalogRepository.existsBySlugAndProjectSlug(catalogSlug, projectSlug)) {
+            return ResponseEntity.badRequest().build();
+        }
+
         if (!permissionService.hasPermission(projectSlug, authentication, List.of(PermissionRole.OWNER, PermissionRole.WRITER))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only owner or writer can change");
         }
 
-        if (!catalogRepository.existsBySlugAndProjectSlug(catalogSlug, projectSlug)) {
-            return ResponseEntity.badRequest().build();
-        }
         Project project = projectRepository.findProjectBySlug(projectSlug)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "project not found"));
 
