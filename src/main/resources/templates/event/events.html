@@ -164,8 +164,6 @@
         .ellipsis {
             padding: 8px 12px;
             color: #6b7280;
-            ellia
-
             font-size: 14px;
         }
         .page-input {
@@ -252,8 +250,9 @@
         </div>
         <input type="hidden" name="page" value="0"/>
         <input type="hidden" name="size" th:value="${pageSize}"/>
+        <input type="hidden" name="catalogSlug" th:value="${catalogSlug}"/>
         <div class="button-group">
-            <button type="submit" class="search  search-btn">Поиск событий</button>
+            <button type="submit" class="search search-btn">Поиск событий</button>
             <div sec:authorize="hasAuthority('ADMIN')">
                 <a th:href="@{/projects/catalogs/events/build}" class="create-btn">Создать событие</a>
             </div>
@@ -302,37 +301,37 @@
 
     <!-- Pagination -->
     <div class="pagination-container" th:if="${totalPages > 1}">
-        <a th:href="@{/projects/catalogs/events(page=${currentPage - 1}, size=${pageSize}, text=${text}, begin=${begin != null} ? ${#temporals.format(begin, 'yyyy-MM-dd\'T\'HH:mm')} : '', end=${end != null} ? ${#temporals.format(end, 'yyyy-MM-dd\'T\'HH:mm')} : '')}"
+        <a th:href="@{/projects/catalogs/events(page=${currentPage - 1}, size=${pageSize}, text=${text}, begin=${begin != null} ? ${#temporals.format(begin, 'yyyy-MM-dd\'T\'HH:mm')} : '', end=${end != null} ? ${#temporals.format(end, 'yyyy-MM-dd\'T\'HH:mm')} : '', catalogSlug=${catalogSlug})}"
            th:class="${currentPage == 0} ? 'pagination-btn disabled' : 'pagination-btn'"
            th:text="'« Предыдущая'"></a>
-        <a th:href="@{/projects/catalogs/events(page=0, size=${pageSize}, text=${text}, begin=${begin != null} ? ${#temporals.format(begin, 'yyyy-MM-dd\'T\'HH:mm')} : '', end=${end != null} ? ${#temporals.format(end, 'yyyy-MM-dd\'T\'HH:mm')} : '')}"
+        <a th:href="@{/projects/catalogs/events(page=0, size=${pageSize}, text=${text}, begin=${begin != null} ? ${#temporals.format(begin, 'yyyy-MM-dd\'T\'HH:mm')} : '', end=${end != null} ? ${#temporals.format(end, 'yyyy-MM-dd\'T\'HH:mm')} : '', catalogSlug=${catalogSlug})}"
            th:class="${currentPage == 0} ? 'pagination-btn active' : 'pagination-btn'"
            th:text="1"></a>
         <span th:if="${currentPage > 3}" class="ellipsis">...</span>
         <th:block th:each="i : ${#numbers.sequence(currentPage - 2, currentPage + 2)}"
                   th:if="${i > 0 and i < totalPages - 1}">
-            <a th:href="@{/projects/catalogs/events(page=${i}, size=${pageSize}, text=${text}, begin=${begin != null} ? ${#temporals.format(begin, 'yyyy-MM-dd\'T\'HH:mm')} : '', end=${end != null} ? ${#temporals.format(end, 'yyyy-MM-dd\'T\'HH:mm')} : '')}"
+            <a th:href="@{/projects/catalogs/events(page=${i}, size=${pageSize}, text=${text}, begin=${begin != null} ? ${#temporals.format(begin, 'yyyy-MM-dd\'T\'HH:mm')} : '', end=${end != null} ? ${#temporals.format(end, 'yyyy-MM-dd\'T\'HH:mm')} : '', catalogSlug=${catalogSlug})}"
                th:class="${i == currentPage} ? 'pagination-btn active' : 'pagination-btn'"
                th:text="${i + 1}"></a>
         </th:block>
         <span th:if="${currentPage < totalPages - 3}" class="ellipsis">...</span>
-        <a th:href="@{/projects/catalogs/events(page=${totalPages - 1}, size=${pageSize}, text=${text}, begin=${begin != null} ? ${#temporals.format(begin, 'yyyy-MM-dd\'T\'HH:mm')} : '', end=${end != null} ? ${#temporals.format(end, 'yyyy-MM-dd\'T\'HH:mm')} : '')}"
+        <a th:href="@{/projects/catalogs/events(page=${totalPages - 1}, size=${pageSize}, text=${text}, begin=${begin != null} ? ${#temporals.format(begin, 'yyyy-MM-dd\'T\'HH:mm')} : '', end=${end != null} ? ${#temporals.format(end, 'yyyy-MM-dd\'T\'HH:mm')} : '', catalogSlug=${catalogSlug})}"
            th:class="${currentPage == totalPages - 1} ? 'pagination-btn active' : 'pagination-btn'"
            th:text="${totalPages}"
            th:if="${totalPages > 1}"></a>
-        <a th:href="@{/projects/catalogs/events(page=${currentPage + 1}, size=${pageSize}, text=${text}, begin=${begin != null} ? ${#temporals.format(begin, 'yyyy-MM-dd\'T\'HH:mm')} : '', end=${end != null} ? ${#temporals.format(end, 'yyyy-MM-dd\'T\'HH:mm')} : '')}"
+        <a th:href="@{/projects/catalogs/events(page=${currentPage + 1}, size=${pageSize}, text=${text}, begin=${begin != null} ? ${#temporals.format(begin, 'yyyy-MM-dd\'T\'HH:mm')} : '', end=${end != null} ? ${#temporals.format(end, 'yyyy-MM-dd\'T\'HH:mm')} : '', catalogSlug=${catalogSlug})}"
            th:class="${currentPage == totalPages - 1} ? 'pagination-btn disabled' : 'pagination-btn'"
            th:text="'Следующая »'"></a>
         <label for="pageInput">Перейти: </label>
         <input type="number" id="pageInput" th:value="${currentPage + 1}" min="1"
                th:max="${totalPages}"
-               onchange="navigateToPage(this.value, ${pageSize}, ${totalPages}, `${text}`, `${begin != null} ? ${#temporals.format(begin, 'yyyy-MM-dd\'T\'HH:mm')} : ''`, `${end != null} ? ${#temporals.format(end, 'yyyy-MM-dd\'T\'HH:mm')} : ''`)"
+               onchange="navigateToPage(this.value, ${pageSize}, ${totalPages}, `${text}`, `${begin != null} ? ${#temporals.format(begin, 'yyyy-MM-dd\'T\'HH:mm')} : ''`, `${end != null} ? ${#temporals.format(end, 'yyyy-MM-dd\'T\'HH:mm')} : ''`, `${catalogSlug}`)"
                class="page-input">
     </div>
 </div>
 
 <script>
-    function navigateToPage(pageInput, pageSize, totalPages, text, begin, end) {
+    function navigateToPage(pageInput, pageSize, totalPages, text, begin, end, catalogSlug) {
         if (!pageSize || !totalPages) {
             console.error('pageSize or totalPages is undefined');
             return;
@@ -347,6 +346,7 @@
         if (text) url += '&text=' + encodeURIComponent(text);
         if (begin) url += '&begin=' + encodeURIComponent(begin);
         if (end) url += '&end=' + encodeURIComponent(end);
+        if (catalogSlug) url += '&catalogSlug=' + encodeURIComponent(catalogSlug);
         window.location.href = url;
     }
 </script>

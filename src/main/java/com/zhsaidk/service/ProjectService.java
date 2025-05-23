@@ -95,7 +95,6 @@ public class ProjectService {
         if (!permissionService.hasPermission(projectSlug, authentication, List.of(PermissionRole.OWNER))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only owner can delete");
         }
-
         return projectRepository.findProjectBySlug(projectSlug)
                 .map(project -> {
                     projectRepository.deleteBySlug(projectSlug);

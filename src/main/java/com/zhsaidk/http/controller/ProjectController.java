@@ -57,6 +57,8 @@ public class ProjectController {
         model.addAttribute("totalPages", projectPage.getTotalPages());
         model.addAttribute("totalItems", projectPage.getTotalElements());
         model.addAttribute("pageSize", size);
+//        model.addAttribute("projectSlug", projectSlug);
+
 
         return "project/projects";
     }
@@ -127,13 +129,14 @@ public class ProjectController {
     public String getCatalogs(Model model,
                               @RequestParam(value = "page", defaultValue = "0") Integer page,
                               @RequestParam(value = "size", defaultValue = "10") Integer size,
+                              @RequestParam(value = "projectSlug", required = false) String projectSlug,
                               Authentication authentication) {
-        Page<Catalog> catalogs = catalogService.findAllCatalogs(PageRequest.of(page, size, Sort.by("createdAt").ascending()), authentication);
+        Page<Catalog> catalogs = catalogService.findAllCatalogs(PageRequest.of(page, size, Sort.by("createdAt").ascending()), projectSlug, authentication);
         model.addAttribute("catalogs", catalogs.getContent());
         model.addAttribute("currentPage", catalogs.getNumber());
         model.addAttribute("totalPages", catalogs.getTotalPages());
         model.addAttribute("totalItems", catalogs.getTotalElements());
-        model.addAttribute("pageSize", size);
+        model.addAttribute("projectSlug", projectSlug);
         return "catalog/catalogs";
     }
 
@@ -209,8 +212,9 @@ public class ProjectController {
                             @RequestParam(value = "begin", required = false) LocalDateTime begin,
                             @RequestParam(value = "end", required = false) LocalDateTime end,
                             @RequestParam(value = "showCatalogId", required = false) Long showCatalogId,
+                            @RequestParam(value = "catalogSlug", required = false) String catalogSlug,
                             Authentication authentication) {
-        Page<Event> events = eventService.findAllEvents(PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")), text, begin, end, authentication);
+        Page<Event> events = eventService.findAllEvents(PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")), text, begin, end, catalogSlug, authentication);
 
         model.addAttribute("events", events.getContent());
         model.addAttribute("currentPage", events.getNumber());
@@ -221,6 +225,7 @@ public class ProjectController {
         model.addAttribute("begin", begin);
         model.addAttribute("end", end);
         model.addAttribute("showCatalogId", showCatalogId);
+        model.addAttribute("catalogSlug", catalogSlug);
 
         return "event/events";
     }

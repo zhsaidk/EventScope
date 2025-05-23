@@ -74,9 +74,10 @@ public class ProjectRestController {
 
     @GetMapping("/projects/catalogs")
     public ResponseEntity<PagedModel<Catalog>> getAllCatalogs(@RequestParam(value = "page", defaultValue = "0") Integer page,
-                                                              @RequestParam(value = "szie", defaultValue = "10") Integer size,
+                                                              @RequestParam(value = "size", defaultValue = "10") Integer size,
+                                                              @RequestParam(value = "projectSlug", required = false) String projectSlug,
                                                               Authentication authentication) {
-        return ResponseEntity.ok(catalogService.findAll(PageRequest.of(page, size, Sort.by("createdAt")), authentication));
+        return ResponseEntity.ok(catalogService.findAll(PageRequest.of(page, size, Sort.by("createdAt")), projectSlug, authentication));
     }
 
     @GetMapping("/{projectSlug}/{catalogSlug}")
@@ -157,8 +158,9 @@ public class ProjectRestController {
                                                           @RequestParam(name = "end", required = false) LocalDateTime end,
                                                           @RequestParam(name = "page", defaultValue = "0") Integer page,
                                                           @RequestParam(name = "size", defaultValue = "10") Integer size,
+                                                          @RequestParam(name = "catalogSlug", required = false) String catalogSlug,
                                                           Authentication authentication) {
-        return eventService.findByParameters(name, begin, end, page, size, authentication);
+        return eventService.findByParameters(name, begin, end, page, size, catalogSlug, authentication);
     }
 
 //    @GetMapping("/projects/catalogs/events/{catalogSlug}")          //TODO Для тестирование метода (Можно удалить)

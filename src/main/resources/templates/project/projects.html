@@ -8,7 +8,7 @@
         table {
             border-collapse: collapse;
             width: 100%;
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 20px auto;
         }
         th, td {
@@ -181,6 +181,7 @@
             <th>ID</th>
             <th>Название</th>
             <th>Описание</th>
+            <th>Слаг</th>
             <th>Активен</th>
             <th>Создано</th>
             <th sec:authorize="hasAuthority('ADMIN')">Действия с проектом</th>
@@ -191,11 +192,12 @@
         <tr th:each="project : ${projects}">
             <td th:text="${project.id}"></td>
             <td>
-                <a th:href="@{/projects/catalogs/__${project.slug}__}"
+                <a th:href="@{/projects/catalogs(projectSlug=${project.slug})}"
                    th:text="${project.name}"
                    class="text-blue-500 hover:underline"></a>
             </td>
             <td th:text="${project.description} ?: ''"></td>
+            <td th:text="${project.slug} ?: ''"></td>
             <td th:text="${project.active} ? 'Да' : 'Нет'"></td>
             <td th:text="${#temporals.format(project.createdAt, 'dd.MM.yyyy HH:mm')}"></td>
             <td sec:authorize="hasAuthority('ADMIN')">

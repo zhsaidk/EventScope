@@ -39,7 +39,7 @@ public class EventService {
 
     public ResponseEntity<?> build(BuildEventDto dto, String projectSlug, String catalogSlug, Authentication authentication) {
 
-        if (!permissionService.hasPermission(projectSlug, authentication, List.of(PermissionRole.OWNER, PermissionRole.WRITER))){
+        if (!permissionService.hasPermission(projectSlug, authentication, List.of(PermissionRole.OWNER, PermissionRole.WRITER))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "you have not permission");
         }
 
@@ -69,7 +69,7 @@ public class EventService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Каталог не относится к проекту");
         }
 
-        if (!permissionService.hasPermission(projectSlug, authentication, List.of(PermissionRole.OWNER, PermissionRole.WRITER))){
+        if (!permissionService.hasPermission(projectSlug, authentication, List.of(PermissionRole.OWNER, PermissionRole.WRITER))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
@@ -90,7 +90,7 @@ public class EventService {
 
     public ResponseEntity<?> update(UUID id, BuildCreateEventDto dto, String projectSlug, String catalogSlug, Authentication authentication) {
 
-        if (!permissionService.hasPermission(projectSlug, authentication, List.of(PermissionRole.OWNER, PermissionRole.WRITER))){
+        if (!permissionService.hasPermission(projectSlug, authentication, List.of(PermissionRole.OWNER, PermissionRole.WRITER))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
@@ -106,27 +106,33 @@ public class EventService {
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
-    public ResponseEntity<PagedModel<Event>> findByParameters(String text, LocalDateTime begin, LocalDateTime end, Integer pageNumber, Integer size, Authentication authentication) {
+    public ResponseEntity<PagedModel<Event>> findByParameters(String text,
+                                                              LocalDateTime begin,
+                                                              LocalDateTime end,
+                                                              Integer pageNumber,
+                                                              Integer size,
+                                                              String catalogSlug,
+                                                              Authentication authentication) {
 
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        Page<Event> page = eventRepository.findAll(EventSpecification.byCriteria(text, begin, end, userDetails.getId()), PageRequest.of(pageNumber, size, Sort.by("localCreatedAt")));
+        Page<Event> page = eventRepository.findAll(EventSpecification.byCriteria(text, begin, end, userDetails.getId(), catalogSlug), PageRequest.of(pageNumber, size, Sort.by("localCreatedAt")));
         return ResponseEntity.ok(new PagedModel<>(page));
     }
 
-    public Page<Event> findAllEvents(PageRequest pageRequest, String text, LocalDateTime begin, LocalDateTime end, Authentication authentication){
+    public Page<Event> findAllEvents(PageRequest pageRequest, String text, LocalDateTime begin, LocalDateTime end, String catalogSlug, Authentication authentication) {
         Integer userId = userRepository.findUserIdByUsername(authentication.getName())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
 
-        return eventRepository.findAll(EventSpecification.byCriteria(text, begin, end, userId), pageRequest);
+        return eventRepository.findAll(EventSpecification.byCriteria(text, begin, end, userId, catalogSlug), pageRequest);
     }
 
     //TODO Нужно реализовать Pageable до конца для MVC
-    public Page<Event> findAllEventsByCatalogSlug(String catalogSlug, Authentication authentication, Integer page, Integer size){
+    public Page<Event> findAllEventsByCatalogSlug(String catalogSlug, Authentication authentication, Integer page, Integer size) {
 
         Catalog catalog = catalogRepository.findCatalogBySlugWithProject(catalogSlug)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Catalog not found"));
 
-        if (!permissionService.hasAnyPermission(catalog.getProject().getSlug(), authentication)){
+        if (!permissionService.hasAnyPermission(catalog.getProject().getSlug(), authentication)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "you have not any permission");
         }
 
@@ -139,7 +145,7 @@ public class EventService {
             throw new IllegalArgumentException("Каталог не относится к проекту");
         }
 
-        if (!permissionService.hasPermission(projectSlug, authentication, List.of(PermissionRole.OWNER, PermissionRole.WRITER))){
+        if (!permissionService.hasPermission(projectSlug, authentication, List.of(PermissionRole.OWNER, PermissionRole.WRITER))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "you have not permission");
         }
 

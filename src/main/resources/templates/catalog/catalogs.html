@@ -12,7 +12,7 @@
             padding: 0;
         }
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
         }
@@ -176,25 +176,13 @@
             border: 1px solid #ddd;
             border-radius: 4px;
         }
-        @media (max-width: 768px) {
-            table {
-                font-size: 14px;
-            }
-            th, td {
-                padding: 8px;
-            }
-            .view-btn, .create-event-btn, .delete-btn {
-                padding: 6px 12px;
-                font-size: 12px;
-            }
-        }
     </style>
 </head>
 <body>
 <div class="container">
-
     <h1>Каталоги</h1>
     <div th:if="${message}" th:text="${message}" class="message"></div>
+
     <div class="table-container">
         <table>
             <thead>
@@ -202,6 +190,7 @@
                 <th>ID</th>
                 <th>Название</th>
                 <th>Описание</th>
+                <th>Слаг</th>
                 <th>Активен</th>
                 <th>Версия</th>
                 <th>Создано</th>
@@ -212,19 +201,21 @@
             <tr th:each="catalog : ${catalogs}">
                 <th th:text="${catalog.id}"></th>
                 <td>
-                    <a th:href="@{/projects/catalogs/events/__${catalog.slug}__}"
+                    <a th:href="@{/projects/catalogs/events(projectSlug=${projectSlug != null and #strings.isEmpty(projectSlug) == false} ? ${projectSlug} : ${catalog.project.slug}, catalogSlug=${catalog.slug})}"
                        th:text="${catalog.name}"
                        class="text-blue-500 hover:underline"></a>
                 </td>
                 <td th:text="${catalog.description} ?: 'N/A'"></td>
+                <td th:text="${catalog.slug} ?: 'N/A'"></td>
                 <td th:text="${catalog.active} ? 'Да' : 'Нет'"></td>
                 <td th:text="${catalog.version} ?: 'N/A'"></td>
                 <td th:text="${catalog.createdAt != null} ? ${#temporals.format(catalog.createdAt, 'dd.MM.yyyy HH:mm')} : 'N/A'"></td>
                 <td>
-                    <a th:href="@{/projects/catalogs/__${catalog.slug}__/edit}" class="view-btn">Изменить</a>
+                    <a th:href="@{/projects/catalogs/__${catalog.slug}__/edit(projectSlug=${projectSlug != null and #strings.isEmpty(projectSlug) == false} ? ${projectSlug} : ${catalog.project.slug})}" class="view-btn">Изменить</a>
                     <div sec:authorize="hasAuthority('ADMIN')">
-                        <a th:href="@{/projects/catalogs/events/build(projectSlug=${catalog.project.slug}, catalogSlug=${catalog.slug})}" class="create-event-btn">Создать событие</a>
+                        <a th:href="@{/projects/catalogs/events/build(projectSlug=${projectSlug != null and #strings.isEmpty(projectSlug) == false} ? ${projectSlug} : ${catalog.project.slug}, catalogSlug=${catalog.slug})}" class="create-event-btn">Создать событие</a>
                         <form th:action="@{/projects/__${catalog.project.slug}__/catalogs/__${catalog.slug}__/delete}" method="post" style="display: inline;">
+                            <input type="hidden" name="projectSlug" th:value="${projectSlug != null and #strings.isEmpty(projectSlug) == false} ? ${projectSlug} : ${catalog.project.slug}"/>
                             <button type="submit" class="delete-btn" onclick="return confirm('Вы уверены, что хотите удалить каталог?')">Удалить</button>
                         </form>
                     </div>
@@ -239,37 +230,43 @@
 
     <!-- Пагинация -->
     <div class="pagination-container" th:if="${totalPages > 1}">
-        <a th:href="@{/projects/catalogs(page=${currentPage - 1}, size=${pageSize})}"
+        <a th:href="@{/projects/catalogs(page=${currentPage - 1}, size=${pageSize}, projectSlug=${projectSlug != null and #strings.isEmpty(projectSlug) == false} ? ${projectSlug} : '')}"
            th:class="${currentPage == 0} ? 'pagination-btn disabled' : 'pagination-btn'"
            th:text="'« Предыдущая'"></a>
-        <a th:href="@{/projects/catalogs(page=0, size=${pageSize})}"
+        <a th:href="@{/projects/catalogs(page=0, size=${pageSize}, projectSlug=${projectSlug != null and #strings.isEmpty(projectSlug) == false} ? ${projectSlug} : '')}"
            th:class="${currentPage == 0} ? 'pagination-btn active' : 'pagination-btn'"
            th:text="1"></a>
         <span th:if="${currentPage > 3}" class="ellipsis">...</span>
         <th:block th:each="i : ${#numbers.sequence(currentPage - 2, currentPage + 2)}"
                   th:if="${i > 0 and i < totalPages - 1}">
-            <a th:href="@{/projects/catalogs(page=${i}, size=${pageSize})}"
+            <a th:href="@{/projects/catalogs(page=${i}, size=${pageSize}, projectSlug=${projectSlug != null and #strings.isEmpty(projectSlug) == false} ? ${projectSlug} : '')}"
                th:class="${i == currentPage} ? 'pagination-btn active' : 'pagination-btn'"
                th:text="${i + 1}"></a>
         </th:block>
         <span th:if="${currentPage < totalPages - 3}" class="ellipsis">...</span>
-        <a th:href="@{/projects/catalogs(page=${totalPages - 1}, size=${pageSize})}"
+        <a th:href="@{/projects/catalogs(page=${totalPages - 1}, size=${pageSize}, projectSlug=${projectSlug != null and #strings.isEmpty(projectSlug) == false} ? ${projectSlug} : '')}"
            th:class="${currentPage == totalPages - 1} ? 'pagination-btn active' : 'pagination-btn'"
            th:text="${totalPages}"
            th:if="${totalPages > 1}"></a>
-        <a th:href="@{/projects/catalogs(page=${currentPage + 1}, size=${pageSize})}"
+        <a th:href="@{/projects/catalogs(page=${currentPage + 1}, size=${pageSize}, projectSlug=${projectSlug != null and #strings.isEmpty(projectSlug) == false} ? ${projectSlug} : '')}"
            th:class="${currentPage == totalPages - 1} ? 'pagination-btn disabled' : 'pagination-btn'"
            th:text="'Следующая »'"></a>
         <label for="pageInput">Перейти: </label>
         <input type="number" id="pageInput" th:value="${currentPage + 1}" min="1"
                th:max="${totalPages}"
-               onchange="navigateToPage(this.value, ${pageSize}, ${totalPages})"
+               th:with="escapedProjectSlug=${#strings.escapeJavaScript(projectSlug)}"
+               onchange="navigateToPage(this.value, ${pageSize}, ${totalPages}, `${escapedProjectSlug != null and #strings.isEmpty(escapedProjectSlug) == false} ? ${escapedProjectSlug} : ''`)"
                class="page-input">
+    </div>
+
+    <div class="create-container">
+        <a th:href="@{/projects}" class="back-btn">Назад к проектам</a>
+        <a th:href="@{/projects/catalogs/build(projectSlug=${projectSlug != null and #strings.isEmpty(projectSlug) == false} ? ${projectSlug} : '')}" class="create-btn">Создать каталог</a>
     </div>
 </div>
 
 <script>
-    function navigateToPage(pageInput, pageSize, totalPages) {
+    function navigateToPage(pageInput, pageSize, totalPages, projectSlug) {
         if (!pageSize || !totalPages) {
             console.error('pageSize or totalPages is undefined');
             return;
@@ -280,7 +277,12 @@
         } else if (page > totalPages) {
             page = totalPages;
         }
-        window.location.href = '/projects/catalogs?page=' + (page - 1) + '&size=' + pageSize;
+        let url = '/projects/catalogs?page=' + (page - 1) + '&size=' + pageSize;
+        if (projectSlug && projectSlug !== '') {
+            url += '&projectSlug=' + encodeURIComponent(projectSlug);
+        }
+        console.debug('Navigating to: ' + url); // Отладка
+        window.location.href = url;
     }
 </script>
 </body>
