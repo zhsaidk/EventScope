@@ -34,11 +34,6 @@ public class CatalogService {
     private final ProjectRepository projectRepository;
     private final PermissionService permissionService;
 
-    public PagedModel<Catalog> findAll(PageRequest pageRequest, String projectSlug, Authentication authentication) {
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        return new PagedModel<>(catalogRepository.findAll(CatalogSpecification.getAll(projectSlug, userDetails.getId()), pageRequest));
-    } //TODO Нужно обеденить первый и второй метод методов
-
     public Page<Catalog> findAllCatalogs(PageRequest pageRequest, String projectSlug, Authentication authentication) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         return catalogRepository.findAll(CatalogSpecification.getAll(projectSlug, userDetails.getId()), pageRequest);

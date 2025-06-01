@@ -4,8 +4,6 @@ import com.zhsaidk.database.entity.Catalog;
 import com.zhsaidk.database.entity.Event;
 import com.zhsaidk.database.entity.Project;
 import com.zhsaidk.database.repo.CatalogRepository;
-import com.zhsaidk.database.repo.EventRepository;
-import com.zhsaidk.database.repo.ProjectRepository;
 import com.zhsaidk.dto.*;
 import com.zhsaidk.service.CatalogService;
 import com.zhsaidk.service.EventService;
@@ -19,8 +17,6 @@ import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -36,7 +32,7 @@ public class ProjectRestController {
     private final CatalogRepository catalogRepository;
 
     @GetMapping("/projects")
-    public ResponseEntity<PagedModel<Project>> getAllProject(@RequestParam(value = "page", defaultValue = "0") Integer page,
+    public ResponseEntity<Page<Project>> getAllProject(@RequestParam(value = "page", defaultValue = "0") Integer page,
                                                              @RequestParam(value = "size", defaultValue = "10") Integer size,
                                                              Authentication authentication) {
         return ResponseEntity.ok(projectService.getAll(PageRequest.of(page, size, Sort.by("createdAt")), authentication));
@@ -73,11 +69,11 @@ public class ProjectRestController {
 
 
     @GetMapping("/projects/catalogs")
-    public ResponseEntity<PagedModel<Catalog>> getAllCatalogs(@RequestParam(value = "page", defaultValue = "0") Integer page,
+    public ResponseEntity<Page<Catalog>> getAllCatalogs(@RequestParam(value = "page", defaultValue = "0") Integer page,
                                                               @RequestParam(value = "size", defaultValue = "10") Integer size,
                                                               @RequestParam(value = "projectSlug", required = false) String projectSlug,
                                                               Authentication authentication) {
-        return ResponseEntity.ok(catalogService.findAll(PageRequest.of(page, size, Sort.by("createdAt")), projectSlug, authentication));
+        return ResponseEntity.ok(catalogService.findAllCatalogs(PageRequest.of(page, size, Sort.by("createdAt")), projectSlug, authentication));
     }
 
     @GetMapping("/{projectSlug}/{catalogSlug}")
@@ -162,14 +158,4 @@ public class ProjectRestController {
                                                           Authentication authentication) {
         return eventService.findByParameters(name, begin, end, page, size, catalogSlug, authentication);
     }
-
-//    @GetMapping("/projects/catalogs/events/{catalogSlug}")          //TODO Для тестирование метода (Можно удалить)
-//    public ResponseEntity<Page<Event>> getEventsWithCatalogSlug(@PathVariable("catalogSlug") String catalogSlug,
-//                                                                @RequestParam(name = "page", defaultValue = "0") Integer page,
-//                                                                @RequestParam(name = "size", defaultValue = "10") Integer size,
-//                                                                Authentication authentication) {
-//
-//
-//        return ResponseEntity.ok(eventService.findAllEventsByCatalogSlug(catalogSlug, authentication, page, size));
-//    }
 }

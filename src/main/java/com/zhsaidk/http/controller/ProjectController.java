@@ -50,7 +50,7 @@ public class ProjectController {
                               @RequestParam(value = "size", defaultValue = "10") Integer size,
                               Authentication authentication) {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by("createdAt"));
-        Page<Project> projectPage = projectService.getAllProjects(pageRequest, authentication);
+        Page<Project> projectPage = projectService.getAll(pageRequest, authentication);
 
         model.addAttribute("projects", projectPage.getContent());
         model.addAttribute("currentPage", projectPage.getNumber());
