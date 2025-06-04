@@ -1,5 +1,6 @@
 package com.zhsaidk.http.controller;
 
+import com.opencsv.CSVWriter;
 import com.zhsaidk.database.entity.Catalog;
 import com.zhsaidk.database.entity.Event;
 import com.zhsaidk.database.entity.PermissionRole;
@@ -13,10 +14,16 @@ import com.zhsaidk.dto.BuildReadCatalogDto;
 import com.zhsaidk.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -27,7 +34,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
@@ -41,6 +52,7 @@ public class ProjectController {
     private final UserRepository userRepository;
     private final PermissionService permissionService;
     private final UserService userService;
+    private final EventExportService exportService;
 
     // === Projects ===
 
@@ -167,10 +179,12 @@ public class ProjectController {
         return "redirect:/projects/catalogs";
     }
 
-    @GetMapping("/projects/catalogs/{catalogSlug}/edit")
+    @GetMapping("/projects/{projectSlug}/catalogs/{catalogSlug}/edit")
     public String getCatalogPage(@PathVariable("catalogSlug") String catalogSlug,
-                                 Model model){
-        model.addAttribute("catalog", catalogService.findCatalogByCatalogSlug(catalogSlug));
+                                 @PathVariable("projectSlug") String projectSlug,
+                                 Authentication authentication,
+                                 Model model) {
+        model.addAttribute("catalog", catalogService.findCatalogByCatalogSlug(projectSlug, catalogSlug, authentication));
         return "catalog/catalog";
     }
 
@@ -186,20 +200,7 @@ public class ProjectController {
         }
 
         catalogService.update(projectSlug, catalogSlug, dto, authentication);
-        return "redirect:/projects/catalogs/" + catalogSlug + "/edit";
-    }
-
-    @GetMapping("/projects/catalogs/{projectSlug}")
-    public String getCatalogWithProjectSlug(@PathVariable("projectSlug") String projectSlug,
-                                            Authentication authentication,
-                                            Model model) {
-
-        if (!permissionService.hasAnyPermission(projectSlug, authentication)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "you have not any permission");
-        }
-
-        model.addAttribute("catalogs", catalogService.findAllCatalogsByProjectSlug(projectSlug, authentication));
-        return "catalog/catalogsWithProjectSlug";
+        return "redirect:/projects/" + projectSlug + "/catalogs/" + catalogSlug + "/edit";
     }
 
     // === Events ===
@@ -214,7 +215,7 @@ public class ProjectController {
                             @RequestParam(value = "showCatalogId", required = false) Long showCatalogId,
                             @RequestParam(value = "catalogSlug", required = false) String catalogSlug,
                             Authentication authentication) {
-        Page<Event> events = eventService.findAllEvents(PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")), text, begin, end, catalogSlug, authentication);
+        Page<Event> events = eventService.findAllEvents(PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")), text, begin, end, authentication);
 
         model.addAttribute("events", events.getContent());
         model.addAttribute("currentPage", events.getNumber());
@@ -265,19 +266,44 @@ public class ProjectController {
         return "redirect:/projects/catalogs/events";
     }
 
-    @GetMapping("/projects/catalogs/events/{catalogSlug}")
-    public String getEventsWithCatalogSlug(@PathVariable("catalogSlug") String catalogSlug,
-                                           Model model,
-                                           Authentication authentication,
-                                           @RequestParam(name = "page", defaultValue = "0") Integer page,
-                                           @RequestParam(name = "size", defaultValue = "10") Integer size) {
+//    @GetMapping("/projects/catalogs/events/download")
+//    public ResponseEntity<byte[]> downloadAllEvent(@RequestParam(name = "format") String format,
+//                                                   @RequestParam(value = "text", required = false) String text,
+//                                                   @RequestParam(value = "begin", required = false) LocalDateTime begin,
+//                                                   @RequestParam(value = "end", required = false) LocalDateTime end,
+//                                                   Authentication authentication) throws IOException {
+//        List<Event> events = eventService.findEvents(text, begin, end, authentication);
+//        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+//
+//        try(CSVWriter csvWriter = new CSVWriter(new OutputStreamWriter(outputStream))){
+//            csv
+//        };
+//
+//    }
 
+    @GetMapping("/projects/catalogs/events/download")
+    public ResponseEntity<byte[]> downloadEvent(@RequestParam(name = "format") String format,
+                                                @RequestParam(value = "text", required = false) String text,
+                                                @RequestParam(value = "begin", required = false) LocalDateTime begin,
+                                                @RequestParam(value = "end", required = false) LocalDateTime end,
+                                                Authentication authentication) throws IOException {
+        List<Event> events = eventService.findEvents(text, begin, end, authentication);
+        if ("csv".equalsIgnoreCase(format)) {
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=events.csv")
+                    .contentType(MediaType.parseMediaType("text/csv"))
+                    .body(exportService.exportCsv(events));
+        } else if ("excel".equalsIgnoreCase(format)) {
 
-        model.addAttribute("events", eventService.findAllEventsByCatalogSlug(catalogSlug, authentication, page, size));
-        return "event/eventsWithCatalogSlug";
+            byte[] data = exportService.exportExel(events);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=events.xlsx")
+                    .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                    .body(data);
+        } else {
+            throw new IllegalArgumentException("Unsupported format: " + format);
+        }
     }
-
-    // === Auth ===
 
     @GetMapping("/login")
     public String loginPage() {

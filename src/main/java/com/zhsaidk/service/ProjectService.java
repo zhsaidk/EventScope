@@ -9,9 +9,12 @@ import com.zhsaidk.dto.BuildProjectDTO;
 import com.zhsaidk.dto.CachedPage;
 import com.zhsaidk.util.SlugUtil;
 import jakarta.annotation.PostConstruct;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -37,41 +40,43 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
     private final PermissionService permissionService;
+    @PersistenceContext
+    private EntityManager entityManager;
+    private static final Duration CACHE_TTL = Duration.ofMillis(20000);
 
     public Page<Project> getAll(PageRequest pageRequest, Authentication authentication) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        String generatedName = generateKey("Project", pageRequest.getPageNumber(), pageRequest.getPageSize());
-        CachedPage<Project> pageFromCache = cacheService.getPageFromCache(generatedName, Project.class);
-        if (pageFromCache != null){
+        String key = generateKey(pageRequest);
+        CachedPage<Project> pageFromCache = cacheService.loadCachedPage(key, Project.class, authentication);
+        if (pageFromCache != null) {
             return new PageImpl<>(pageFromCache.getContent(), pageRequest, pageFromCache.getTotalElements());
         }
 
         Page<Project> allProjects = projectRepository.findAll(ProjectSpecification.getAllProjects(userDetails.getId()), pageRequest);
-        
-        cacheService.putPageInCache(generatedName, allProjects, Duration.ofSeconds(10));
+
+        cacheService.putCachedPage(key, allProjects, Project.class, authentication, CACHE_TTL);
         return allProjects;
     }
-    
-    public String generateKey(String className, Integer pageNumber, Integer size){
-        return className + "::page" + ":" + pageNumber + "size" + ":" + size;
+
+    public String generateKey(PageRequest pageRequest) {
+        if (pageRequest == null) {
+            throw new IllegalArgumentException("All parameters must be non-null");
+        }
+        return String.format("page_%d::size_%d",
+                pageRequest.getPageNumber(), pageRequest.getPageSize());
     }
 
     public Project getProjectByProjectSlug(String projectSlug, Authentication authentication) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        Project cachedProject = cacheService.get("Project", projectSlug, Project.class);
-        if(cachedProject != null){
+        Project cachedProject = cacheService.get(projectSlug, Project.class, authentication);
+        if (cachedProject != null) {
             return cachedProject;
-        }
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
         }
 
         Project project = projectRepository.findOne(ProjectSpecification.getProjectByProjectSlug(projectSlug, userDetails.getId()))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
-        cacheService.put(projectSlug, project, Duration.ofSeconds(10));
+        cacheService.put(projectSlug, project, authentication, CACHE_TTL);
         return project;
     }
 
@@ -93,9 +98,7 @@ public class ProjectService {
                 .build();
 
         project.addPermission(permission);
-        Project savedProject = projectRepository.save(project);
-        cacheService.put(savedProject.getSlug(), savedProject, Duration.ofSeconds(60));
-        return savedProject;
+        return projectRepository.save(project);
     }
 
     public Project modify(String projectSlug,
@@ -114,7 +117,7 @@ public class ProjectService {
                     projectRepository.save(project);
                     return project;
                 }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_MODIFIED));
-        cacheService.put(currentProject.getSlug(), currentProject, Duration.ofSeconds(60));
+        cacheService.put(currentProject.getSlug(), currentProject, authentication, CACHE_TTL);
         return currentProject;
     }
 
@@ -123,12 +126,11 @@ public class ProjectService {
         if (!permissionService.hasPermission(projectSlug, authentication, List.of(PermissionRole.OWNER))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only owner can delete");
         }
-        cacheService.delete("Project", projectSlug);
-        return projectRepository.findProjectBySlug(projectSlug)
-                .map(project -> {
-                    projectRepository.deleteBySlug(projectSlug);
-                    return true;
-                })
-                .orElse(false);
+        int deleted = projectRepository.deleteBySlug(projectSlug);
+        if (deleted > 0) {
+            cacheService.delete(projectSlug, Project.class, authentication);
+            return true;
+        }
+        return false;
     }
 }

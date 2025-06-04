@@ -10,6 +10,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -21,10 +22,10 @@ public class RedisCacheService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
 
-    public void put(String key, Object value, Duration ttl) {
+    public void put(String key, Object object, Authentication authentication, Duration ttl) {
         try {
-            String keyValue = value.getClass().getSimpleName() + "::" + key;
-            redisTemplate.opsForValue().set(keyValue, value, ttl);
+            String generatedName = generateName(key, object.getClass(), authentication);
+            redisTemplate.opsForValue().set(generatedName, object, ttl);
         } catch (DataAccessException exception) {
 
             log.error("Failed to put to Redis: {}", exception.getMessage());
@@ -32,11 +33,11 @@ public class RedisCacheService {
         }
     }
 
-    public <T> T get(String className, String key, Class<T> clazz) {
+    public <T> T get(String key, Class<T> clazz, Authentication authentication) {
         try {
-            Object result = redisTemplate.opsForValue().get(className + "::" + key);
+            Object result = redisTemplate.opsForValue().get(generateName(key, clazz, authentication));
             if (result == null) {
-                log.debug("Cache miss for key: {}:{}", className, key);
+                log.debug("Cache miss for key: {}:{}", clazz.getSimpleName(), key);
                 return null;
             }
             return objectMapper.convertValue(result, clazz);
@@ -46,32 +47,44 @@ public class RedisCacheService {
         }
     }
 
-    public <T> CachedPage<T> getPageFromCache(String key, Class<T> clazz) {
+    public String generateName(String key, Class<?> clazz, Authentication authentication){
+        if (key == null || clazz ==null || authentication == null){
+            throw new IllegalStateException("Key, class or Authentication must not be null");
+        }
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        return String.format("username_%s::class_%s::key_%s",
+                userDetails.getUsername(), clazz.getSimpleName(), key);
+    }
+
+    public <T> CachedPage<T> loadCachedPage(String key, Class<T> clazz, Authentication authentication) {
         try {
-            Object currentObject = redisTemplate.opsForValue().get(key);
+            String generatedName = generateName(key, clazz, authentication);
+            Object currentObject = redisTemplate.opsForValue().get(generatedName);
             if (currentObject == null) {
                 return null;
             }
             JavaType pageType = objectMapper.getTypeFactory().constructParametricType(CachedPage.class, clazz);
             return objectMapper.convertValue(currentObject, pageType);
-        } catch (Exception e) {
+        } catch (Exception exception) {
+            log.error("An error occurred while deserializing the Page object: {}", exception.getMessage());
             return null;
         }
     }
 
-    public void putPageInCache(String key, Page<?> page, Duration ttl) {
+    public void putCachedPage(String key, Page<?> page, Class<?> clazz, Authentication authentication, Duration ttl) {
         try {
-            redisTemplate.opsForValue().set(key, new CachedPage<>(page.getContent(), page.getTotalElements()), ttl);
+
+            String generatedName = generateName(key, clazz, authentication);
+            CachedPage<?> cachedPage = new CachedPage<>(page.getContent(), page.getTotalElements());
+            redisTemplate.opsForValue().set(generatedName, cachedPage, ttl);
         } catch (Exception e) {
-            System.err.println("Ошибка сериализации Page: " + e.getMessage());
+            System.err.println("An error occurred while serializing the page object  : " + e.getMessage());
         }
     }
 
-    public void delete(String className, String key) {
+    public void delete(String key, Class<?> clazz, Authentication authentication) {
         try {
-            if (redisTemplate.opsForValue().get(className + "::" + key) != null){
-                redisTemplate.delete(className + "::" + key);
-            };
+            redisTemplate.delete(generateName(key, clazz, authentication));
         } catch (DataAccessException exception) {
             log.error("Failed to delete from Redis: {}", exception.getMessage());
         }

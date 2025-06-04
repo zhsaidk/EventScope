@@ -26,7 +26,7 @@ public interface CatalogRepository extends JpaRepository<Catalog, Integer> , Jpa
 
     boolean existsBySlug(@Length(max = 255) String slug);
 
-    void deleteBySlug(@Length(max = 255) String slug);
+    int deleteBySlug(@Length(max = 255) String slug);
 
     @Query("select count(c) > 0 from Catalog c where c.slug = :catalogSlug and c.project.slug = :projectSlug")
     boolean existsBySlugAndProjectSlug(String catalogSlug, String projectSlug);

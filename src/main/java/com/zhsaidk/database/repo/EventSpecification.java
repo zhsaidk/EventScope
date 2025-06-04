@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class EventSpecification {
-    public static Specification<Event> byCriteria(String text, LocalDateTime begin, LocalDateTime end, Integer userId, String catalogSlug) {
+    public static Specification<Event> byCriteria(String text, LocalDateTime begin, LocalDateTime end, Integer userId) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -37,10 +37,6 @@ public class EventSpecification {
             Join<Project, ProjectPermission> permissions = project.join("permissions");
             predicates.add(cb.equal(permissions.get("user").get("id"), userId));
             predicates.add(permissions.get("permission").in("OWNER", "READ", "WRITER"));
-            if (StringUtils.hasText(catalogSlug)){
-                predicates.add(cb.equal(catalog.get("slug"), catalogSlug));
-            }
-
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }

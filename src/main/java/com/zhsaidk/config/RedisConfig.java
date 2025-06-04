@@ -25,14 +25,6 @@ public class RedisConfig {
     private final Jackson2ObjectMapperBuilder jackson2ObjectMapperBuilder;
 
     @Bean
-    public ObjectMapper objectMapper() {
-        ObjectMapper objectMapper = jackson2ObjectMapperBuilder.build();
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-        return objectMapper;
-    }
-
-    @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory, ObjectMapper objectMapper) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(redisConnectionFactory);

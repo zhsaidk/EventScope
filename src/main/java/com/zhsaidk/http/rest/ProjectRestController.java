@@ -145,17 +145,19 @@ public class ProjectRestController {
                                          @PathVariable(value = "projectSlug") String projectSlug,
                                          @PathVariable(value = "catalogSlug") String catalogSlug,
                                          Authentication authentication) {
-        return eventService.update(eventId, dto, projectSlug, catalogSlug, authentication);
+        return eventService.update(eventId, dto, projectSlug, authentication);
     }
 
     @GetMapping("/projects/catalogs/events")
-    public ResponseEntity<PagedModel<Event>> getAllEvents(@RequestParam(name = "name", required = false) String name,
+    public ResponseEntity<Page<Event>> getAllEvents(@RequestParam(name = "name", required = false) String name,
                                                           @RequestParam(name = "begin", required = false) LocalDateTime begin,
                                                           @RequestParam(name = "end", required = false) LocalDateTime end,
                                                           @RequestParam(name = "page", defaultValue = "0") Integer page,
                                                           @RequestParam(name = "size", defaultValue = "10") Integer size,
-                                                          @RequestParam(name = "catalogSlug", required = false) String catalogSlug,
                                                           Authentication authentication) {
-        return eventService.findByParameters(name, begin, end, page, size, catalogSlug, authentication);
+        PageRequest pageRequest = PageRequest.of(page, size);
+        Page<Event> allEvents = eventService.findAllEvents(pageRequest, name, begin, end, authentication);
+
+        return ResponseEntity.ok(allEvents);
     }
 }
