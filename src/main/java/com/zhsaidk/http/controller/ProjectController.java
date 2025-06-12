@@ -215,7 +215,8 @@ public class ProjectController {
                             @RequestParam(value = "showCatalogId", required = false) Long showCatalogId,
                             @RequestParam(value = "catalogSlug", required = false) String catalogSlug,
                             Authentication authentication) {
-        Page<Event> events = eventService.findAllEvents(PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")), text, begin, end, authentication);
+//        Page<Event> events = eventService.findAllEvents(PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")), text, begin, end, authentication);
+        Page<Event> events = eventService.findAll(PageRequest.of(page, size, Sort.by("createdAt")), text, begin, end, authentication);
 
         model.addAttribute("events", events.getContent());
         model.addAttribute("currentPage", events.getNumber());

@@ -28,6 +28,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @Service
@@ -40,7 +41,7 @@ public class EventService {
     private final PermissionService permissionService;
     private final RedisCacheService cacheService;
     private final EntityManager entityManager;
-    private static final Duration CACHE_TTL = Duration.ofMillis(20000);
+    private static final Duration CACHE_TTL = Duration.ofSeconds(60);
 
     @Transactional
     public ResponseEntity<?> build(BuildEventDto dto, String projectSlug, String catalogSlug, Authentication authentication) {
@@ -79,7 +80,7 @@ public class EventService {
         }
 
         int deleted = eventRepository.deleteEventById(id);
-        if (deleted>0) {
+        if (deleted > 0) {
             cacheService.delete(id.toString(), Event.class, authentication);
             return true;
         }
@@ -89,7 +90,7 @@ public class EventService {
     public ResponseEntity<?> getById(UUID id, String projectSlug, String catalogSlug, Authentication authentication) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         Event cachedEvent = cacheService.get(id.toString(), Event.class, authentication);
-        if (cachedEvent != null){
+        if (cachedEvent != null) {
             return ResponseEntity.ok(cachedEvent);
         }
 
@@ -119,31 +120,79 @@ public class EventService {
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
-    public String generateKey(PageRequest pageRequest){
-        return String.format("page_%s::size_%s",
-                pageRequest.getPageSize(), pageRequest.getPageSize());
-    }
-
-    public Page<Event> findAllEvents(PageRequest pageRequest, String text, LocalDateTime begin, LocalDateTime end, Authentication authentication) {
+    public Page<Event> findAll(PageRequest pageRequest, String text, LocalDateTime begin, LocalDateTime end, Authentication authentication) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
-        String generatedName = generateKey(pageRequest);
-        CachedPage<Event> pageFromCache = cacheService.loadCachedPage(generatedName, Event.class, authentication);
-        if (pageFromCache != null){
-            return new PageImpl<>(pageFromCache.getContent(), pageRequest, pageFromCache.getTotalElements());
+        String key = generateCacheKey(text, begin, end);
+        CachedPage<UUID> cachedPage = cacheService.loadCachedPage(key, UUID.class, authentication);
+        if (cachedPage == null) {
+            Page<UUID> currentPage = eventRepository.findIdsBySpecification(EventSpecification.byCriteria(text, begin, end, userDetails.getId()), pageRequest);
+            cachedPage = new CachedPage<>(currentPage.getContent(), currentPage.getTotalElements());
+            cacheService.putCachedPage(key, currentPage, UUID.class, authentication, CACHE_TTL);
         }
 
-        Page<Event> allEvents = eventRepository.findAll(EventSpecification.byCriteria(text, begin, end, userDetails.getId()), pageRequest);
+        List<Event> events = eventRepository.findAllById(cachedPage.getContent());
 
-        cacheService.putCachedPage(generatedName, allEvents, Project.class, authentication, CACHE_TTL);
-
-        return allEvents;
+        return new PageImpl<>(events, pageRequest, cachedPage.getTotalElements());
     }
 
-    public List<Event> findEvents(String text,LocalDateTime begin,LocalDateTime end, Authentication authentication){
+//    public Page<Event> findAllEvents(PageRequest pageRequest, String text, LocalDateTime begin, LocalDateTime end, Authentication authentication) {
+//        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+//
+//        List<UUID> uuids = cacheService.getList("all_events", UUID.class, authentication);
+//        if (uuids != null) {
+//            return eventRepository.findAll(EventSpecification.byCriteria(text, begin, end, uuids), pageRequest);
+//        }
+//
+//        List<UUID> allEventsUUID = eventRepository.findAllEventsUUID(userDetails.getId());
+//        cacheService.putList("all_events", allEventsUUID, UUID.class, CACHE_TTL, authentication);
+//        return eventRepository.findAll(EventSpecification.byCriteria(text, begin, end, allEventsUUID), pageRequest);
+//    }
+//
+//    public Page<Event> findAllEventsWithJavaFilter(PageRequest pageRequest,
+//                                               String text,
+//                                               LocalDateTime begin,
+//                                               LocalDateTime end,
+//                                               Authentication authentication) {
+//        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+//
+//        List<Event> cachedEvents = cacheService.getList("all_events", Event.class, authentication);
+//        if (cachedEvents == null) {
+//            cachedEvents = eventRepository.findAllEventsWithUserId(userDetails.getId());
+//            cacheService.putList("all_events", cachedEvents, Event.class, CACHE_TTL, authentication);
+//        }
+//
+//        String generatedKey = generateResultCacheKey(text, begin, end, authentication);
+//        List<Event> result = cacheService.getList(generatedKey, Event.class, authentication);
+//        if (result == null){
+//            result = cachedEvents.stream()
+//                    .filter(event -> text == null || event.getName().toLowerCase().contains(text.toLowerCase()))
+//                    .filter(event -> begin == null || !event.getCreatedAt().isBefore(begin))
+//                    .filter(event -> end == null || !event.getCreatedAt().isAfter(end))
+//                    .toList();
+//
+//            cacheService.putList(generatedKey, result, Event.class, CACHE_TTL, authentication);
+//        }
+//        int start = (int) pageRequest.getOffset();
+//        int endIdx = Math.min(start + pageRequest.getPageSize(), result.size());
+//        List<Event> pageContent = (start < endIdx) ? result.subList(start, endIdx) : List.of();
+//        return new PageImpl<>(pageContent, pageRequest, result.size());
+//    }
+
+    public String generateCacheKey(String text,
+                                   LocalDateTime begin,
+                                   LocalDateTime end) {
+
+        return String.format("text_%s::begin_%s::end_%s",
+                text, begin, end);
+    }
+
+
+    public List<Event> findEvents(String text, LocalDateTime begin, LocalDateTime end, Authentication authentication) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         return eventRepository.findAll(EventSpecification.byCriteria(text, begin, end, userDetails.getId()));
-    };
+    }
+
 
     @Transactional
     public void createEvent(BuildEventWebDto dto, String projectSlug, String catalogSlug, Authentication authentication) {

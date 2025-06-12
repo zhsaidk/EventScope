@@ -13,4 +13,3 @@ RUN cp ./build/libs/EventScope-*.jar ./service.jar
 COPY application-dev.yaml .
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "service.jar"]
-CMD ["--spring.config.location=classpath:/application.yaml,file:application-dev.yaml"]

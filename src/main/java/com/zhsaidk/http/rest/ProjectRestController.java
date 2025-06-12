@@ -9,6 +9,7 @@ import com.zhsaidk.service.CatalogService;
 import com.zhsaidk.service.EventService;
 import com.zhsaidk.service.ProjectService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -152,11 +153,11 @@ public class ProjectRestController {
     public ResponseEntity<Page<Event>> getAllEvents(@RequestParam(name = "name", required = false) String name,
                                                           @RequestParam(name = "begin", required = false) LocalDateTime begin,
                                                           @RequestParam(name = "end", required = false) LocalDateTime end,
-                                                          @RequestParam(name = "page", defaultValue = "0") Integer page,
-                                                          @RequestParam(name = "size", defaultValue = "10") Integer size,
+                                                          @RequestParam(name = "page", defaultValue = "0") @Min(value = 0, message = "Page must be not null") Integer page,
+                                                          @RequestParam(name = "size", defaultValue = "10") @Min(value = 0, message = "Size must be not null") Integer size,
                                                           Authentication authentication) {
         PageRequest pageRequest = PageRequest.of(page, size);
-        Page<Event> allEvents = eventService.findAllEvents(pageRequest, name, begin, end, authentication);
+        Page<Event> allEvents = eventService.findAll(pageRequest, name, begin, end, authentication);
 
         return ResponseEntity.ok(allEvents);
     }
