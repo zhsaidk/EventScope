@@ -8,4 +8,4 @@ CREATE TABLE project_permission(
     permission VARCHAR(12) NOT NULL ,
     created_at TIMESTAMP NOT NULL
 );
---rollback ALTER TABLE project DROP COLUMN access_permission;
+--rollback ALTER TABLE project DROP COLUMN access_permission;\

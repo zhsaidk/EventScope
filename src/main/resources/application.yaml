@@ -1,16 +1,38 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5433/postgres
+    url: jdbc:postgresql://localhost:5432/postgres
     username: postgres
     password: pass
     driver-class-name: org.postgresql.Driver
-  application:
+
+    hikari:
+      leak-detection-threshold: 30000
+      maximum-pool-size: 20
+      connection-timeout: 60000
     name:
       EventScope
   data:
     redis:
       host: localhost
       port: 6379
+  jpa:
+    open-in-view: false
+  rabbitmq:
+    username: user
+    password: password
+    port: 5672
+    host: localhost
+  mail:
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+    host: smtp.gmail.com
+    username: zhsaidk@gmail.com
+    password: pyvl kfos dxmp nfau
 
 server:
   port: 8082
+

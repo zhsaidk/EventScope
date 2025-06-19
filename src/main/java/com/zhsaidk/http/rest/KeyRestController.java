@@ -1,7 +1,9 @@
 package com.zhsaidk.http.rest;
 
+import com.zhsaidk.database.entity.ApiKey;
 import com.zhsaidk.dto.CreateKeyDto;
 import com.zhsaidk.service.ApiKeyService;
+import com.zhsaidk.service.RabbitProducer;
 import com.zhsaidk.service.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,6 +18,7 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class KeyRestController {
     private final ApiKeyService apiKeyService;
+    private final RabbitProducer rabbitProducer;
 
     @DeleteMapping("/key/{keyId}")
     public ResponseEntity<?> deleteKey(@PathVariable("keyId") Integer keyId){
@@ -40,6 +43,9 @@ public class KeyRestController {
     @PostMapping("/api")
     public ResponseEntity<?> createKey(@RequestBody CreateKeyDto keyDto,
                                        Authentication authentication){
-        return ResponseEntity.ok(apiKeyService.createKey(keyDto, authentication));
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        ApiKey key = apiKeyService.createKey(keyDto, authentication);
+        rabbitProducer.sendEmailMessage(userDetails.getUsername(), "Ваш новый api ключ: \n" + key.getKey_hash());
+        return ResponseEntity.ok(key);
     }
 }

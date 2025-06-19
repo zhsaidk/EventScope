@@ -267,21 +267,6 @@ public class ProjectController {
         return "redirect:/projects/catalogs/events";
     }
 
-//    @GetMapping("/projects/catalogs/events/download")
-//    public ResponseEntity<byte[]> downloadAllEvent(@RequestParam(name = "format") String format,
-//                                                   @RequestParam(value = "text", required = false) String text,
-//                                                   @RequestParam(value = "begin", required = false) LocalDateTime begin,
-//                                                   @RequestParam(value = "end", required = false) LocalDateTime end,
-//                                                   Authentication authentication) throws IOException {
-//        List<Event> events = eventService.findEvents(text, begin, end, authentication);
-//        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-//
-//        try(CSVWriter csvWriter = new CSVWriter(new OutputStreamWriter(outputStream))){
-//            csv
-//        };
-//
-//    }
-
     @GetMapping("/projects/catalogs/events/download")
     public ResponseEntity<byte[]> downloadEvent(@RequestParam(name = "format") String format,
                                                 @RequestParam(value = "text", required = false) String text,

@@ -24,6 +24,8 @@ repositories {
 }
 
 dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	implementation 'org.springframework.boot:spring-boot-starter-amqp'
 	implementation 'org.apache.poi:poi-ooxml:5.4.1'
 	implementation 'org.apache.poi:poi:5.4.1'
 	implementation 'com.opencsv:opencsv:5.11'

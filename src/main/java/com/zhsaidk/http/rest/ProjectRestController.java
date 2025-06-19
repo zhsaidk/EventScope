@@ -3,18 +3,14 @@ package com.zhsaidk.http.rest;
 import com.zhsaidk.database.entity.Catalog;
 import com.zhsaidk.database.entity.Event;
 import com.zhsaidk.database.entity.Project;
-import com.zhsaidk.database.repo.CatalogRepository;
 import com.zhsaidk.dto.*;
-import com.zhsaidk.service.CatalogService;
-import com.zhsaidk.service.EventService;
-import com.zhsaidk.service.ProjectService;
+import com.zhsaidk.service.*;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -30,7 +26,7 @@ public class ProjectRestController {
     private final ProjectService projectService;
     private final CatalogService catalogService;
     private final EventService eventService;
-    private final CatalogRepository catalogRepository;
+    private final RabbitProducer rabbitProducer;
 
     @GetMapping("/projects")
     public ResponseEntity<Page<Project>> getAllProject(@RequestParam(value = "page", defaultValue = "0") Integer page,
@@ -160,5 +156,13 @@ public class ProjectRestController {
         Page<Event> allEvents = eventService.findAll(pageRequest, name, begin, end, authentication);
 
         return ResponseEntity.ok(allEvents);
+    }
+
+    @PostMapping("/send/{msg}")
+    public ResponseEntity<?> sendMessage(@PathVariable("msg") String message,
+                            Authentication authentication){
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        rabbitProducer.sendEmailMessage(userDetails.getUsername(), message);
+        return ResponseEntity.ok("Email sent to: " + userDetails.getUsername());
     }
 }
